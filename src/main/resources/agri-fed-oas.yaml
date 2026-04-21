@@ -1,0 +1,594 @@
+openapi: 3.0.0
+info:
+  title: Agricultural Federation API
+  version: 1.0.0
+  description: API for managing agricultural collectivities, members, treasury, activities and statistics
+
+servers:
+  - url: https://localhost:8080
+
+paths:
+
+  /members:
+    get:
+      summary: Get all members
+      responses:
+        200:
+          description: List of members
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Member"
+    post:
+      summary: Create a member
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Member"
+      responses:
+        201:
+          description: Member created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Member"
+        400:
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  details:
+                    type: string
+              example:
+                error: "Invalid input"
+                details: "Email already exists or missing required fields"
+
+  /collectivities:
+    get:
+      summary: Get all collectivities
+      responses:
+        200:
+          description: List of collectivities
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Collectivity"
+
+    post:
+      summary: Request creation of a collectivity
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                specialization:
+                  type: string
+                zone:
+                  type: string
+                members:
+                  type: array
+                  minItems: 10
+                  items:
+                    type: object
+                    properties:
+                      memberId:
+                        type: integer
+                      role:
+                        type: string
+                        enum:
+                          [ President, VicePresident, Treasurer, Secretary, ConfirmedMember, JuniorMember ]
+      responses:
+        201:
+          description: Request created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  status:
+                    type: string
+                    enum: [ Pending ]
+                  message:
+                    type: string
+              example:
+                id: 1
+                status: "Pending"
+                message: "Collectivity creation request submitted"
+        400:
+          description: Conditions not satisfied
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  details:
+                    type: string
+              example:
+                error: "Invalid request"
+                details: "At least 10 members are required"
+        422:
+          description: Business rule violation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  details:
+                    type: string
+              example:
+                error: "Validation error"
+                details: "President role must be assigned to exactly one member"
+
+  /collectivities/{id}/approve:
+    post:
+      summary: Approve a collectivity
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Collectivity approved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  status:
+                    type: string
+                    enum: [ Approved ]
+                  approvalDate:
+                    type: string
+                    format: date
+              example:
+                id: 1
+                status: "Approved"
+                approvalDate: "2026-04-21"
+        404:
+          description: Collectivity not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+              example:
+                error: "Collectivity not found"
+        400:
+          description: Conditions not satisfied
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  details:
+                    type: string
+              example:
+                error: "Invalid request"
+                details: "Collectivity must have at least 10 members"
+        422:
+          description: Business rule violation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  details:
+                    type: string
+              example:
+                error: "Validation error"
+                details: "Roles are not properly assigned (missing Treasurer)"
+
+  /collectivities/{c_id}/members:
+    post:
+      summary: Add a member to a collectivity
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                memberId:
+                  type: integer
+                sponsorId:
+                  type: integer
+            example:
+              memberId: 12
+              sponsorId: 5
+      responses:
+        201:
+          description: Member added to collectivity
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  memberId:
+                    type: integer
+                  collectivityId:
+                    type: integer
+                  role:
+                    type: string
+              example:
+                memberId: 12
+                collectivityId: 3
+                role: "JuniorMember"
+        400:
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  details:
+                    type: string
+              example:
+                error: "Invalid request"
+                details: "Sponsor is required"
+        404:
+          description: Member or collectivity not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+              example:
+                error: "Member or collectivity not found"
+
+  /members/{m_id}/change-collectivity/{c_id}:
+    post:
+      summary: Change member collectivity
+      parameters:
+        - in: path
+          name: m_id
+          required: true
+          schema:
+            type: integer
+        - in: path
+          name: c_id
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Member collectivity updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  memberId:
+                    type: integer
+                  oldCollectivityId:
+                    type: integer
+                  newCollectivityId:
+                    type: integer
+                  role:
+                    type: string
+                    enum:
+                      - President
+                      - VicePresident
+                      - Treasurer
+                      - Secretary
+                      - ConfirmedMember
+                      - JuniorMember
+                  updatedAt:
+                    type: string
+                    format: date
+              example:
+                memberId: 12
+                oldCollectivityId: 1
+                newCollectivityId: 3
+                role: "JuniorMember"
+                updatedAt: "2026-04-21"
+        400:
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  details:
+                    type: string
+              example:
+                error: "Invalid request"
+                details: "Member cannot switch collectivities while having unpaid balance"
+        404:
+          description: Member or collectivity not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+              example:
+                error: "Member or collectivity not found"
+        422:
+          description: Business rule violation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  details:
+                    type: string
+              example:
+                error: "Validation error"
+                details: "Member must be active in current collectivity for at least 3 months before transfer"
+
+  /collectivities/{id}/payments:
+    post:
+      summary: Register a payment
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Payment"
+      responses:
+        201:
+          description: Payment recorded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  paymentId:
+                    type: integer
+                  memberId:
+                    type: integer
+                  collectivityId:
+                    type: integer
+                  amount:
+                    type: number
+                  date:
+                    type: string
+                    format: date
+              example:
+                paymentId: 101
+                memberId: 12
+                collectivityId: 3
+                amount: 5000
+                date: "2026-04-21"
+        400:
+          description: Invalid payment
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  details:
+                    type: string
+              example:
+                error: "Invalid payment"
+                details: "Amount must be greater than 0"
+
+        404:
+          description: Collectivity or member not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+              example:
+                error: "Collectivity or member not found"
+
+  /collectivities/{id}/accounts:
+    post:
+      summary: Create account
+      responses:
+        201:
+          description: Account created
+        400:
+          description: "Invalid account (ex: multiple cash accounts)"
+
+  /collectivities/{id}/activities:
+    post:
+      summary: Create activity
+      responses:
+        201:
+          description: Activity created
+
+  /activities/{id}/attendance:
+    post:
+      summary: Register attendance
+      responses:
+        201:
+          description: Attendance recorded
+
+  /collectivities/{id}/statistics:
+    get:
+      summary: Get statistics of collectivity
+      responses:
+        200:
+          description: Statistics retrieved
+        404:
+          description: Collectivity not found
+
+components:
+  schemas:
+
+    Member:
+      type: object
+      properties:
+        id:
+          type: integer
+        firstName:
+          type: string
+        lastName:
+          type: string
+        birthDate:
+          type: string
+          format: date
+        gender:
+          type: string
+          enum: [Male, Female]
+        address:
+          type: string
+        job:
+          type: string
+        phoneNumber:
+          type: string
+        email:
+          type: string
+        adhesionDate:
+          type: string
+          format: date
+
+    Collectivity:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        specialization:
+          type: string
+        creationDate:
+          type: string
+          format: date
+        zone:
+          type: string
+
+    Membership:
+      type: object
+      properties:
+        memberId:
+          type: integer
+        collectivityId:
+          type: integer
+        role:
+          type: string
+          enum:
+            [President, VicePresident, Treasurer, Secretary, ConfirmedMember, JuniorMember]
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+
+    Payment:
+      type: object
+      properties:
+        id:
+          type: integer
+        memberId:
+          type: integer
+        amount:
+          type: number
+        type:
+          type: string
+          enum: [Monthly, Annual, Exceptional, Adhesion]
+        paymentMethod:
+          type: string
+          enum: [Cash, BankTransfer, MobileMoney]
+        date:
+          type: string
+          format: date
+
+    Account:
+      type: object
+      properties:
+        id:
+          type: integer
+        type:
+          type: string
+          enum: [Cash, Bank, MobileMoney]
+        balance:
+          type: number
+        bankName:
+          type: string
+        accountNumber:
+          type: string
+        phoneNumber:
+          type: string
+
+    Activity:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        type:
+          type: string
+          enum: [MonthlyMeeting, Training, Exceptional]
+        mandatory:
+          type: boolean
+        date:
+          type: string
+          format: date
+
+    Attendance:
+      type: object
+      properties:
+        memberId:
+          type: integer
+        present:
+          type: boolean
+        justified:
+          type: boolean
+
+    MemberStats:
+      type: object
+      properties:
+        memberId:
+          type: integer
+        attendanceRate:
+          type: number
+        totalPayments:
+          type: number
+        unpaidAmount:
+          type: number
