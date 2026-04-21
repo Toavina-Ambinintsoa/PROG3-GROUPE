@@ -18,7 +18,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Member"
+                type: array
+                items:
+                  $ref: "#/components/schemas/Member"
     post:
       summary: Create a member
       requestBody:
@@ -58,9 +60,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Collectivity"
+                $ref: "#/components/schemas/Collectivity"
 
     post:
       summary: Request creation of a collectivity
@@ -500,35 +500,572 @@ paths:
 
   /collectivities/{id}/accounts:
     post:
-      summary: Create account
+      summary: Create a new account for a collectivity
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: Collectivity ID
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Account"
+            example:
+              type: Bank
+              bankName: BOA
+              accountNumber: "12345123451234512345123"
+              balance: 0
       responses:
         201:
-          description: Account created
+          description: Account successfully created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Account"
+              example:
+                id: 10
+                type: Bank
+                bankName: BOA
+                accountNumber: "12345123451234512345123"
+                balance: 0
         400:
-          description: "Invalid account (ex: multiple cash accounts)"
+          description: Invalid account creation request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  details:
+                    type: string
+              example:
+                error: "Invalid request"
+                details: "A collectivity can only have one Cash account"
+        404:
+          description: Collectivity not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+              example:
+                error: "Collectivity not found"
 
   /collectivities/{id}/activities:
     post:
-      summary: Create activity
+      summary: Create an activity for a collectivity
+      description: >
+        Creates an activity for a collectivity. There are two mandatory recurring
+        activity types (MonthlyMeeting and Training), plus optional Exceptional
+        activities. For Exceptional activities, the collectivity defines whether
+        attendance is mandatory for all members or specific roles only (e.g. juniors only).
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: Collectivity ID
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Activity"
+            example:
+              name: "Monthly Agricultural Meeting"
+              type: MonthlyMeeting
+              mandatory: true
+              date: "2026-05-10"
       responses:
         201:
-          description: Activity created
+          description: Activity successfully created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Activity"
+              example:
+                id: 25
+                name: "Monthly Agricultural Meeting"
+                type: MonthlyMeeting
+                mandatory: true
+                date: "2026-05-10"
+        400:
+          description: Invalid activity data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  details:
+                    type: string
+              example:
+                error: "Invalid request"
+                details: "Date must be in the future"
+        404:
+          description: Collectivity not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+              example:
+                error: "Collectivity not found"
+
+  /federation/activities:
+    post:
+      summary: Create a federation-level activity
+      description: >
+        Allows the federation to plan activities (mandatory or not) to which
+        all collectivities are invited. For example, an annual general assembly.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Activity"
+            example:
+              name: "Annual General Assembly"
+              type: Exceptional
+              mandatory: true
+              date: "2026-12-07"
+      responses:
+        201:
+          description: Federation activity successfully created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Activity"
+              example:
+                id: 1
+                name: "Annual General Assembly"
+                type: Exceptional
+                mandatory: true
+                date: "2026-12-07"
+        400:
+          description: Invalid activity data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  details:
+                    type: string
+              example:
+                error: "Invalid request"
+                details: "Date must be in the future"
 
   /activities/{id}/attendance:
     post:
-      summary: Register attendance
+      summary: Register attendance for an activity
+      description: >
+        The secretary registers attendance for each member at an activity.
+        A member can be excused (justified = true) if they informed the secretary
+        in advance of their absence. Members from other collectivities can attend
+        but their presence is not counted in their own collectivity attendance rate.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: Activity ID
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/AttendanceEntry"
+            example:
+              - memberId: 12
+                present: true
+                justified: false
+                fromOtherCollectivity: false
+              - memberId: 15
+                present: false
+                justified: true
+                fromOtherCollectivity: false
+              - memberId: 47
+                present: true
+                justified: false
+                fromOtherCollectivity: true
       responses:
         201:
-          description: Attendance recorded
+          description: Attendance successfully recorded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  activityId:
+                    type: integer
+                  recordedAt:
+                    type: string
+                    format: date
+                  totalPresent:
+                    type: integer
+                  totalAbsent:
+                    type: integer
+                  totalJustified:
+                    type: integer
+              example:
+                activityId: 25
+                recordedAt: "2026-05-10"
+                totalPresent: 18
+                totalAbsent: 3
+                totalJustified: 1
+        400:
+          description: Invalid attendance data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  details:
+                    type: string
+              example:
+                error: "Invalid request"
+                details: "Member list cannot be empty"
+        404:
+          description: Activity or member not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+              example:
+                error: "Activity or member not found"
+
+  /members/{id}/resign:
+    post:
+      summary: Resign a member from their collectivity
+      description: >
+        Allows a member to resign from their collectivity. The member's
+        membership is ended with the current date as the end date.
+        A member cannot resign if they have an unpaid balance.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: Member ID
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  description: Optional reason for resignation
+            example:
+              reason: "Moving to another city"
+      responses:
+        200:
+          description: Member successfully resigned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  memberId:
+                    type: integer
+                  collectivityId:
+                    type: integer
+                  resignationDate:
+                    type: string
+                    format: date
+              example:
+                memberId: 12
+                collectivityId: 3
+                resignationDate: "2026-04-21"
+        400:
+          description: Resignation not allowed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  details:
+                    type: string
+              example:
+                error: "Invalid request"
+                details: "Member cannot resign while having unpaid balance"
+        404:
+          description: Member not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+              example:
+                error: "Member not found"
 
   /collectivities/{id}/statistics:
     get:
-      summary: Get statistics of collectivity
+      summary: Get global statistics of a collectivity
+      description: >
+        Returns aggregated data about members, attendance, and finances for a
+        collectivity over a given period. Used by the president for monthly
+        reports to the federation and internal detailed member stats.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: Collectivity ID
+          schema:
+            type: integer
+        - in: query
+          name: from
+          required: false
+          description: Start date of the statistics period
+          schema:
+            type: string
+            format: date
+        - in: query
+          name: to
+          required: false
+          description: End date of the statistics period
+          schema:
+            type: string
+            format: date
       responses:
         200:
-          description: Statistics retrieved
+          description: Statistics retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  collectivityId:
+                    type: integer
+                  totalMembers:
+                    type: integer
+                  activeMembers:
+                    type: integer
+                  attendanceRate:
+                    type: number
+                    description: Global attendance rate for the collectivity
+                  period:
+                    type: object
+                    properties:
+                      from:
+                        type: string
+                        format: date
+                      to:
+                        type: string
+                        format: date
+                  memberStats:
+                    type: array
+                    description: Detailed stats per active member
+                    items:
+                      $ref: "#/components/schemas/MemberStats"
+              example:
+                collectivityId: 3
+                totalMembers: 120
+                activeMembers: 110
+                attendanceRate: 0.87
+                period:
+                  from: "2026-04-01"
+                  to: "2026-04-30"
+                memberStats:
+                  - memberId: 12
+                    attendanceRate: 0.90
+                    totalPayments: 250000
+                    unpaidAmount: 0
+                  - memberId: 15
+                    attendanceRate: 0.70
+                    totalPayments: 100000
+                    unpaidAmount: 50000
         404:
           description: Collectivity not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+              example:
+                error: "Collectivity not found"
+
+  /federation/leadership:
+    get:
+      summary: Get current federation leadership
+      description: Returns the current federation board (President, VicePresident, Treasurer, Secretary)
+      responses:
+        200:
+          description: Current federation leadership retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Mandate"
+              example:
+                - id: 1
+                  memberId: 5
+                  collectivityId: null
+                  role: President
+                  startDate: "2025-01-01"
+                  endDate: "2026-12-31"
+                  level: Federation
+                - id: 2
+                  memberId: 9
+                  collectivityId: null
+                  role: Treasurer
+                  startDate: "2025-01-01"
+                  endDate: "2026-12-31"
+                  level: Federation
+
+    post:
+      summary: Appoint federation leadership
+      description: >
+        Assigns the federation leadership roles after an election.
+        The federation President must currently be or have previously been
+        a collectivity President. Federation mandates last 2 years.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+                properties:
+                  memberId:
+                    type: integer
+                  role:
+                    type: string
+                    enum: [President, VicePresident, Treasurer, Secretary]
+                  startDate:
+                    type: string
+                    format: date
+            example:
+              - memberId: 5
+                role: President
+                startDate: "2025-01-01"
+              - memberId: 9
+                role: Treasurer
+                startDate: "2025-01-01"
+      responses:
+        201:
+          description: Federation leadership successfully appointed
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Mandate"
+        400:
+          description: Invalid appointment request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  details:
+                    type: string
+              example:
+                error: "Invalid request"
+                details: "All four roles must be assigned: President, VicePresident, Treasurer, Secretary"
+        422:
+          description: Business rule violation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  details:
+                    type: string
+              examples:
+                notPresident:
+                  summary: Candidate for federation president was never a collectivity president
+                  value:
+                    error: "Validation error"
+                    details: "Federation President must currently be or have been a collectivity President"
+                mandateLimitReached:
+                  summary: Member exceeded mandate limit for the role
+                  value:
+                    error: "Validation error"
+                    details: "Member has already held this role for 2 mandates"
+
+  /collectivities/{id}/mandates:
+    get:
+      summary: Get mandates history of a collectivity
+      description: >
+        Returns all mandates (past and current) for a collectivity.
+        Useful to check if a member has reached the 2-mandate limit for a role.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Mandates retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Mandate"
+              example:
+                - id: 10
+                  memberId: 5
+                  collectivityId: 3
+                  role: President
+                  startDate: "2024-01-01"
+                  endDate: "2024-12-31"
+                  level: Collectivity
+                - id: 11
+                  memberId: 5
+                  collectivityId: 3
+                  role: President
+                  startDate: "2025-01-01"
+                  endDate: "2025-12-31"
+                  level: Collectivity
+        404:
+          description: Collectivity not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+              example:
+                error: "Collectivity not found"
 
   /federation/statistics:
     get:
@@ -819,3 +1356,57 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/CollectivityStatistics"
+
+    AttendanceEntry:
+      type: object
+      description: Attendance record for a single member at an activity
+      required:
+        - memberId
+        - present
+      properties:
+        memberId:
+          type: integer
+          description: ID of the member
+        present:
+          type: boolean
+          description: Whether the member was present
+        justified:
+          type: boolean
+          description: >
+            Whether the absence is justified. True if the member informed
+            the secretary in advance. Only relevant when present = false.
+        fromOtherCollectivity:
+          type: boolean
+          description: >
+            True if the member belongs to a different collectivity.
+            Their presence will not count in their own collectivity's attendance rate.
+
+    Mandate:
+      type: object
+      description: >
+        Represents a mandate (term) of a member holding a specific role in a
+        collectivity or at the federation level. A mandate lasts one civil year
+        for collectivities and two years for the federation. A member cannot
+        hold the same specific role more than twice.
+      properties:
+        id:
+          type: integer
+        memberId:
+          type: integer
+        collectivityId:
+          type: integer
+          description: Null if this is a federation-level mandate
+          nullable: true
+        role:
+          type: string
+          enum: [President, VicePresident, Treasurer, Secretary]
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        level:
+          type: string
+          enum: [Collectivity, Federation]
+          description: Whether this mandate is at collectivity or federation level
