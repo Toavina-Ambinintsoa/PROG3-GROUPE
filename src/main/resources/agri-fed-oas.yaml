@@ -49,36 +49,6 @@ paths:
                 error: "Invalid input"
                 details: "Email already exists or missing required fields"
 
-  /collectivities/{id}/member:
-    get:
-      summary: Get all members of a collectivity
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: integer
-            example: 1
-      responses:
-        200:
-          description: List of member
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Member"
-        404:
-          description: collectivity not found
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: collectivity not found
-
   /collectivities:
     get:
       summary: Get all collectivities
@@ -108,6 +78,11 @@ paths:
                 members:
                   type: array
                   minItems: 10
+                  description: >
+                    At least 10 members required, of which at least 5 must have
+                    been members of the federation for at least 6 months.
+                    Specific roles (President, VicePresident, Treasurer, Secretary)
+                    must each be assigned to exactly one member.
                   items:
                     type: object
                     properties:
@@ -147,9 +122,17 @@ paths:
                     type: string
                   details:
                     type: string
-              example:
-                error: "Invalid request"
-                details: "At least 10 members are required"
+              examples:
+                notEnoughMembers:
+                  summary: Less than 10 members
+                  value:
+                    error: "Invalid request"
+                    details: "At least 10 members are required"
+                notEnoughSeniorMembers:
+                  summary: Less than 5 members with 6+ months seniority
+                  value:
+                    error: "Invalid request"
+                    details: "At least 5 members must have been in the federation for at least 6 months"
         422:
           description: Business rule violation
           content:
@@ -161,9 +144,17 @@ paths:
                     type: string
                   details:
                     type: string
-              example:
-                error: "Validation error"
-                details: "President role must be assigned to exactly one member"
+              examples:
+                missingRole:
+                  summary: A specific role is not assigned
+                  value:
+                    error: "Validation error"
+                    details: "President role must be assigned to exactly one member"
+                duplicateRole:
+                  summary: A specific role is assigned to more than one member
+                  value:
+                    error: "Validation error"
+                    details: "Treasurer role must be assigned to exactly one member"
 
   /collectivities/{id}/approve:
     post:
@@ -271,15 +262,29 @@ paths:
                     >= the number of sponsors from other collectivities.
                   items:
                     $ref: "#/components/schemas/SponsorEntry"
-            example:
-              memberId: 12
-              sponsors:
-                - sponsorId: 5
-                  collectivityId: 3
-                  relationship: "colleague"
-                - sponsorId: 8
-                  collectivityId: 3
-                  relationship: "friend"
+            examples:
+              twoSponsorsFromSameCollectivity:
+                summary: "2 sponsors from the target collectivity (valid)"
+                value:
+                  memberId: 12
+                  sponsors:
+                    - sponsorId: 5
+                      collectivityId: 3
+                      relationship: "colleague"
+                    - sponsorId: 8
+                      collectivityId: 3
+                      relationship: "friend"
+              mixedSponsors:
+                summary: "2 sponsors: 1 from target collectivity, 1 from another (valid)"
+                value:
+                  memberId: 15
+                  sponsors:
+                    - sponsorId: 5
+                      collectivityId: 3
+                      relationship: "family"
+                    - sponsorId: 9
+                      collectivityId: 7
+                      relationship: "neighbor"
       responses:
         201:
           description: Member added to collectivity
@@ -493,274 +498,35 @@ paths:
 
   /collectivities/{id}/accounts:
     post:
-      summary: Create a new account for a collectivity
-      parameters:
-        - in: path
-          name: id
-          required: true
-          description: Collectivity ID
-          schema:
-            type: integer
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/Account"
-            example:
-              type: Bank
-              bankName: BOA
-              accountNumber: "12345123451234512345123"
-              balance: 0
+      summary: Create account
       responses:
         201:
-          description: Account successfully created
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Account"
-              example:
-                id: 10
-                type: Bank
-                bankName: BOA
-                accountNumber: "12345123451234512345123"
-                balance: 0
+          description: Account created
         400:
-          description: Invalid account creation request
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                  details:
-                    type: string
-              example:
-                error: "Invalid request"
-                details: "A collectivity can only have one Cash account"
-        404:
-          description: Collectivity not found
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-              example:
-                error: "Collectivity not found"
+          description: "Invalid account (ex: multiple cash accounts)"
 
   /collectivities/{id}/activities:
     post:
-      summary: Create an activity for a collectivity
-      parameters:
-        - in: path
-          name: id
-          required: true
-          description: Collectivity ID
-          schema:
-            type: integer
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/Activity"
-            example:
-              name: Monthly Agricultural Meeting
-              type: MonthlyMeeting
-              mandatory: true
-              date: "2026-05-10"
+      summary: Create activity
       responses:
         201:
-          description: Activity successfully created
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Activity"
-              example:
-                id: 25
-                name: Monthly Agricultural Meeting
-                type: MonthlyMeeting
-                mandatory: true
-                date: "2026-05-10"
-        400:
-          description: Invalid activity data
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                  details:
-                    type: string
-              example:
-                error: "Invalid request"
-                details: "Date must be in the future"
-        404:
-          description: Collectivity not found
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-              example:
-                error: "Collectivity not found"
+          description: Activity created
 
   /activities/{id}/attendance:
     post:
-      summary: Register attendance for members in an activity
-      parameters:
-        - in: path
-          name: id
-          required: true
-          description: Activity ID
-          schema:
-            type: integer
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: "#/components/schemas/Attendance"
-            example:
-              - memberId: 12
-                present: true
-                justified: false
-              - memberId: 15
-                present: false
-                justified: true
+      summary: Register attendance
       responses:
         201:
-          description: Attendance successfully recorded
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  activityId:
-                    type: integer
-                  recordedAt:
-                    type: string
-                    format: date
-                  totalPresent:
-                    type: integer
-                  totalAbsent:
-                    type: integer
-              example:
-                activityId: 8
-                recordedAt: "2026-04-21"
-                totalPresent: 18
-                totalAbsent: 4
-        400:
-          description: Invalid attendance data
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                  details:
-                    type: string
-              example:
-                error: "Invalid request"
-                details: "Member list cannot be empty"
-        404:
-          description: Activity or member not found
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-              example:
-                error: "Activity not found"
+          description: Attendance recorded
 
   /collectivities/{id}/statistics:
     get:
-      summary: Get global statistics of a collectivity
-      description: Returns aggregated data about members, attendance, and finances for a collectivity
-      parameters:
-        - in: path
-          name: id
-          required: true
-          description: Collectivity ID
-          schema:
-            type: integer
-
-        - in: query
-          name: startDate
-          required: false
-          description: Start date for statistics period
-          schema:
-            type: string
-            format: date
-
-        - in: query
-          name: endDate
-          required: false
-          description: End date for statistics period
-          schema:
-            type: string
-            format: date
+      summary: Get statistics of collectivity
       responses:
         200:
-          description: Statistics retrieved successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  collectivityId:
-                    type: integer
-                  totalMembers:
-                    type: integer
-                  activeMembers:
-                    type: integer
-                  attendanceRate:
-                    type: number
-                  totalPayments:
-                    type: number
-                  unpaidAmount:
-                    type: number
-                  period:
-                    type: object
-                    properties:
-                      startDate:
-                        type: string
-                        format: date
-                      endDate:
-                        type: string
-                        format: date
-              example:
-                collectivityId: 3
-                totalMembers: 120
-                activeMembers: 110
-                attendanceRate: 0.87
-                totalPayments: 2500000
-                unpaidAmount: 120000
-                period:
-                  startDate: "2026-04-01"
-                  endDate: "2026-04-30"
+          description: Statistics retrieved
         404:
           description: Collectivity not found
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-              example:
-                error: "Collectivity not found"
 
   /federation/statistics:
     get:
@@ -842,6 +608,7 @@ paths:
 
 components:
   schemas:
+
     Member:
       type: object
       properties:
@@ -923,6 +690,9 @@ components:
 
     Account:
       type: object
+      description: >
+        A financial account for a collectivity. Can be Cash (one per collectivity),
+        Bank, or MobileMoney. Multiple Bank and MobileMoney accounts are allowed.
       properties:
         id:
           type: integer
@@ -931,12 +701,27 @@ components:
           enum: [Cash, Bank, MobileMoney]
         balance:
           type: number
+          description: Current balance in Ariary (MGA)
         bankName:
           type: string
+          description: Name of the bank
+          enum: [BRED, MCB, BMOI, BOA, BGFI, AFG, ACCES_BANQUE, BAOBAB, SIPEM]
         accountNumber:
           type: string
+          description: >
+            23-digit RIB account number in format BBBBBGGGGGCCCCCCCCCCCKKK
+            (5 bank code + 5 branch code + 11 account number + 2 RIB key)
+          pattern: '^\d{23}$'
+        accountHolderName:
+          type: string
+          description: Name of the account holder (required for Bank accounts)
+        mobileMoneyService:
+          type: string
+          description: Mobile money service name (required when type = MobileMoney)
+          enum: [OrangeMoney, Mvola, AirtelMoney]
         phoneNumber:
           type: string
+          description: Phone number associated with the mobile money account
 
     Activity:
       type: object
