@@ -207,9 +207,15 @@ paths:
   /collectivities/{c_id}/members:
     post:
       summary: Add a member to a collectivity
+      description: >
+        Adds a new junior member to a collectivity. The candidate must be sponsored
+        by at least two confirmed members of the federation. The number of sponsors
+        from the target collectivity must be greater than or equal to the number of
+        sponsors from other collectivities. The candidate must also pay the adhesion
+        fee (50 000 Ar) and all mandatory annual contributions set by the collectivity.
       parameters:
         - in: path
-          name: id
+          name: c_id
           required: true
           schema:
             type: integer
@@ -219,14 +225,31 @@ paths:
           application/json:
             schema:
               type: object
+              required:
+                - memberId
+                - sponsors
               properties:
                 memberId:
                   type: integer
-                sponsorId:
-                  type: integer
+                  description: ID of the candidate member
+                sponsors:
+                  type: array
+                  minItems: 2
+                  description: >
+                    List of sponsors. At least 2 confirmed members required.
+                    The number of sponsors from the target collectivity must be
+                    >= the number of sponsors from other collectivities.
+                  items:
+                    $ref: "#/components/schemas/SponsorEntry"
             example:
               memberId: 12
-              sponsorId: 5
+              sponsors:
+                - sponsorId: 5
+                  collectivityId: 3
+                  relationship: "colleague"
+                - sponsorId: 8
+                  collectivityId: 3
+                  relationship: "friend"
       responses:
         201:
           description: Member added to collectivity
@@ -258,7 +281,7 @@ paths:
                     type: string
               example:
                 error: "Invalid request"
-                details: "Sponsor is required"
+                details: "At least two confirmed sponsors are required"
         404:
           description: Member or collectivity not found
           content:
@@ -270,6 +293,20 @@ paths:
                     type: string
               example:
                 error: "Member or collectivity not found"
+        422:
+          description: Business rule violation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  details:
+                    type: string
+              example:
+                error: "Validation error"
+                details: "Number of sponsors from target collectivity must be >= sponsors from other collectivities"
 
   /members/{m_id}/change-collectivity/{c_id}:
     post:
@@ -456,6 +493,84 @@ paths:
         404:
           description: Collectivity not found
 
+  /federation/statistics:
+    get:
+      summary: Get federation-wide statistics
+      description: >
+        Returns a global report (monthly and annual) aggregating data from all
+        collectivities. Used by the federation secretary to evaluate collectivity
+        sustainability and prepare assembly reports.
+      parameters:
+        - in: query
+          name: type
+          required: true
+          schema:
+            type: string
+            enum: [monthly, annual]
+          description: Report period type
+        - in: query
+          name: from
+          required: true
+          schema:
+            type: string
+            format: date
+          description: Start date of the reporting period (inclusive)
+        - in: query
+          name: to
+          required: true
+          schema:
+            type: string
+            format: date
+          description: End date of the reporting period (inclusive)
+      responses:
+        200:
+          description: Federation statistics report retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FederationStatistics"
+              example:
+                reportType: "monthly"
+                from: "2026-03-01"
+                to: "2026-03-31"
+                collectivities:
+                  - collectivityId: 1
+                    collectivityName: "Collectivité Analamanga"
+                    attendanceRate: 87.5
+                    upToDateContributionsRate: 92.0
+                    newMembersCount: 4
+                  - collectivityId: 2
+                    collectivityName: "Collectivité Itasy"
+                    attendanceRate: 73.2
+                    upToDateContributionsRate: 68.5
+                    newMembersCount: 1
+        400:
+          description: Invalid query parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  details:
+                    type: string
+              example:
+                error: "Invalid parameters"
+                details: "'from' date must be before 'to' date"
+        404:
+          description: No data found for the given period
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+              example:
+                error: "No statistics available for the specified period"
+
+
 components:
   schemas:
 
@@ -592,3 +707,60 @@ components:
           type: number
         unpaidAmount:
           type: number
+
+    SponsorEntry:
+      type: object
+      description: A sponsor with their collectivity and relationship to the candidate
+      required:
+        - sponsorId
+        - collectivityId
+        - relationship
+      properties:
+        sponsorId:
+          type: integer
+          description: ID of the sponsoring confirmed member
+        collectivityId:
+          type: integer
+          description: ID of the collectivity the sponsor belongs to
+        relationship:
+          type: string
+          description: Nature of the relationship between the candidate and this sponsor
+          enum: [family, friend, colleague, neighbor, other]
+
+    CollectivityStatistics:
+      type: object
+      description: Statistics for a single collectivity within the federation report
+      properties:
+        collectivityId:
+          type: integer
+        collectivityName:
+          type: string
+        attendanceRate:
+          type: number
+          format: float
+          description: Global attendance rate (%) for the collectivity over the period
+        upToDateContributionsRate:
+          type: number
+          format: float
+          description: Percentage of members who are up to date with their contributions
+        newMembersCount:
+          type: integer
+          description: Number of new members who joined during the period
+
+    FederationStatistics:
+      type: object
+      description: Federation-wide statistics report aggregated across all collectivities
+      properties:
+        reportType:
+          type: string
+          enum: [monthly, annual]
+        from:
+          type: string
+          format: date
+        to:
+          type: string
+          format: date
+        collectivities:
+          type: array
+          items:
+            $ref: "#/components/schemas/CollectivityStatistics"
