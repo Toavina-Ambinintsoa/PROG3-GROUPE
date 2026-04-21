@@ -60,7 +60,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Collectivity"
+                type: array
+                items:
+                  $ref: "#/components/schemas/Collectivity"
 
     post:
       summary: Request creation of a collectivity
