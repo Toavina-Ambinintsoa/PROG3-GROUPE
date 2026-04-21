@@ -686,12 +686,81 @@ paths:
 
   /collectivities/{id}/statistics:
     get:
-      summary: Get statistics of collectivity
+      summary: Get global statistics of a collectivity
+      description: Returns aggregated data about members, attendance, and finances for a collectivity
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: Collectivity ID
+          schema:
+            type: integer
+
+        - in: query
+          name: startDate
+          required: false
+          description: Start date for statistics period
+          schema:
+            type: string
+            format: date
+
+        - in: query
+          name: endDate
+          required: false
+          description: End date for statistics period
+          schema:
+            type: string
+            format: date
       responses:
         200:
-          description: Statistics retrieved
+          description: Statistics retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  collectivityId:
+                    type: integer
+                  totalMembers:
+                    type: integer
+                  activeMembers:
+                    type: integer
+                  attendanceRate:
+                    type: number
+                  totalPayments:
+                    type: number
+                  unpaidAmount:
+                    type: number
+                  period:
+                    type: object
+                    properties:
+                      startDate:
+                        type: string
+                        format: date
+                      endDate:
+                        type: string
+                        format: date
+              example:
+                collectivityId: 3
+                totalMembers: 120
+                activeMembers: 110
+                attendanceRate: 0.87
+                totalPayments: 2500000
+                unpaidAmount: 120000
+                period:
+                  startDate: "2026-04-01"
+                  endDate: "2026-04-30"
         404:
           description: Collectivity not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+              example:
+                error: "Collectivity not found"
 
   /federation/statistics:
     get:
@@ -773,7 +842,6 @@ paths:
 
 components:
   schemas:
-
     Member:
       type: object
       properties:
