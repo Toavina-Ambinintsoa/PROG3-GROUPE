@@ -49,6 +49,36 @@ paths:
                 error: "Invalid input"
                 details: "Email already exists or missing required fields"
 
+  /collectivities/{id}/member:
+    get:
+      summary: Get all members of a collectivity
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        200:
+          description: List of member
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Member"
+        404:
+          description: collectivity not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: collectivity not found
+
   /collectivities:
     get:
       summary: Get all collectivities
@@ -426,26 +456,196 @@ paths:
 
   /collectivities/{id}/accounts:
     post:
-      summary: Create account
+      summary: Create a new account for a collectivity
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: Collectivity ID
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Account"
+            example:
+              type: Bank
+              bankName: BOA
+              accountNumber: "12345123451234512345123"
+              balance: 0
       responses:
         201:
-          description: Account created
+          description: Account successfully created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Account"
+              example:
+                id: 10
+                type: Bank
+                bankName: BOA
+                accountNumber: "12345123451234512345123"
+                balance: 0
         400:
-          description: "Invalid account (ex: multiple cash accounts)"
+          description: Invalid account creation request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  details:
+                    type: string
+              example:
+                error: "Invalid request"
+                details: "A collectivity can only have one Cash account"
+        404:
+          description: Collectivity not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+              example:
+                error: "Collectivity not found"
 
   /collectivities/{id}/activities:
     post:
-      summary: Create activity
+      summary: Create an activity for a collectivity
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: Collectivity ID
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Activity"
+            example:
+              name: Monthly Agricultural Meeting
+              type: MonthlyMeeting
+              mandatory: true
+              date: "2026-05-10"
       responses:
         201:
-          description: Activity created
+          description: Activity successfully created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Activity"
+              example:
+                id: 25
+                name: Monthly Agricultural Meeting
+                type: MonthlyMeeting
+                mandatory: true
+                date: "2026-05-10"
+        400:
+          description: Invalid activity data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  details:
+                    type: string
+              example:
+                error: "Invalid request"
+                details: "Date must be in the future"
+        404:
+          description: Collectivity not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+              example:
+                error: "Collectivity not found"
 
   /activities/{id}/attendance:
     post:
-      summary: Register attendance
+      summary: Register attendance for members in an activity
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: Activity ID
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/Attendance"
+            example:
+              - memberId: 12
+                present: true
+                justified: false
+              - memberId: 15
+                present: false
+                justified: true
       responses:
         201:
-          description: Attendance recorded
+          description: Attendance successfully recorded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  activityId:
+                    type: integer
+                  recordedAt:
+                    type: string
+                    format: date
+                  totalPresent:
+                    type: integer
+                  totalAbsent:
+                    type: integer
+              example:
+                activityId: 8
+                recordedAt: "2026-04-21"
+                totalPresent: 18
+                totalAbsent: 4
+        400:
+          description: Invalid attendance data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  details:
+                    type: string
+              example:
+                error: "Invalid request"
+                details: "Member list cannot be empty"
+        404:
+          description: Activity or member not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+              example:
+                error: "Activity not found"
 
   /collectivities/{id}/statistics:
     get:
