@@ -8,6 +8,6 @@ import org.springframework.stereotype.Component;
 public class CollectivityStructure {
     private Member president;
     private Member vicePresident;
-    private Member tresorier;
+    private Member treasurer;
     private Member secretary;
 }

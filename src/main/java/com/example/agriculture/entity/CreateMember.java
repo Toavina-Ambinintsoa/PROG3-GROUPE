@@ -1,5 +1,13 @@
 package com.example.agriculture.entity;
 
-public class CreateMember {
-    private String collectivityid;
+import lombok.Data;
+
+import java.util.List;
+
+@Data
+public class CreateMember extends MemberInformation {
+    private String collectivityId;
+    private List<Integer> refereesIds;
+    private boolean registrationFeePaid;
+    private boolean membershipDuesPaid;
 }

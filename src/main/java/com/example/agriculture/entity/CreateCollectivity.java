@@ -4,7 +4,7 @@ import java.util.List;
 
 public class CreateCollectivity {
     private String location;
-    private List<MemberIdentifier> memberIdentifiers;
+    private List<Integer> memberIds;
     private Boolean federationApproval;
     private CollectivityStructure collectivityStructure;
 }
