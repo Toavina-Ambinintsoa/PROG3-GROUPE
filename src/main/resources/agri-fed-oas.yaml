@@ -1149,56 +1149,72 @@ paths:
 
 components:
   schemas:
-
     Member:
       type: object
       properties:
         id:
           type: integer
+          example: 1
         firstName:
           type: string
+          example: Toavina
         lastName:
           type: string
+          example: Andriamampianina
         birthDate:
           type: string
           format: date
+          example: "1990-05-15"
         gender:
           type: string
           enum: [Male, Female]
         address:
           type: string
+          example: "lot II 123 Antaninandro"
         job:
           type: string
+          example: "collector"
         phoneNumber:
           type: string
+          example: "034 15 258 34"
         email:
           type: string
+          example: "toavina@gmail.com"
         adhesionDate:
           type: string
           format: date
+          example: "2025-01-01"
+
 
     Collectivity:
       type: object
       properties:
         id:
           type: integer
+          example: 1
         name:
           type: string
+          example: "Collectivité Analamanga"
         specialization:
           type: string
+          example: "General agriculture"
         creationDate:
           type: string
           format: date
+          example: "2024-06-01"
         zone:
           type: string
+          example: "Antananrivo East"
 
     Membership:
       type: object
       properties:
         memberId:
           type: integer
+          example: 1
         collectivityId:
           type: integer
+          example: 1
         role:
           type: string
           enum:
@@ -1206,19 +1222,24 @@ components:
         startDate:
           type: string
           format: date
+          example: "2025-01-01"
         endDate:
           type: string
           format: date
+          example: null
 
     Payment:
       type: object
       properties:
         id:
           type: integer
+          example: 1
         memberId:
           type: integer
+          example: 1
         amount:
           type: number
+          example: 50000.00
         type:
           type: string
           enum: [Monthly, Annual, Exceptional, Adhesion]
@@ -1228,6 +1249,7 @@ components:
         date:
           type: string
           format: date
+          example: "2026-04-21"
 
     Account:
       type: object
