@@ -2,9 +2,11 @@ package com.example.agriculture.entity;
 
 import com.example.agriculture.entity.Enum.Gender;
 import com.example.agriculture.entity.Enum.MemberOccupation;
+import lombok.Data;
 
 import java.time.LocalDate;
 
+@Data
 public class MemberInformation {
     private String firstName;
     private String lastName;
