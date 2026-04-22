@@ -1,13 +1,14 @@
 package com.example.agriculture.service;
 
+import com.example.agriculture.entity.AssignCollectivityIdentity;
 import com.example.agriculture.entity.Collectivity;
 import com.example.agriculture.entity.CreateCollectivity;
 import com.example.agriculture.entity.Member;
+import com.example.agriculture.exception.BadRequestException;
+import com.example.agriculture.exception.NotFoundException;
 import com.example.agriculture.repository.CollectivityRepository;
 import com.example.agriculture.repository.MemberRepository;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.sql.SQLException;
 import java.time.LocalDate;
@@ -31,21 +32,18 @@ public class CollectivityService {
 
             // 400 - autorisation fédération manquante ou structure nulle
             if (!c.getFederationApproval() || c.getStructure() == null) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                        "Federation approval or structure missing");
+                throw new BadRequestException("Federation approval or structure missing");
             }
 
             // 404 - membres introuvables
             List<Member> members = memberRepository.findAllByIds(c.getMembers());
             if (members.size() != c.getMembers().size()) {
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "One or more members not found");
+                throw new NotFoundException("One or more members not found");
             }
 
             // 400 - règle A : au moins 10 membres
             if (c.getMembers().size() < 10) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                        "At least 10 members required");
+                throw new BadRequestException("At least 10 members required");
             }
 
             // 400 - règle A : au moins 5 membres avec ancienneté > 6 mois
@@ -53,8 +51,7 @@ public class CollectivityService {
                     .filter(m -> m.getAdhesionDate().isBefore(LocalDate.now().minusMonths(6)))
                     .count();
             if (seniorCount < 5) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                        "At least 5 members with 6 months seniority required");
+                throw new BadRequestException("At least 5 members with 6 months seniority required");
             }
 
             // 404 - membres de la structure introuvables
@@ -66,11 +63,53 @@ public class CollectivityService {
             );
             List<Member> structureMembers = memberRepository.findAllByIds(structureIds);
             if (structureMembers.size() != structureIds.size()) {
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "One or more structure members not found");
+                throw new NotFoundException("One or more structure members not found");
             }
         }
 
         return collectivityRepository.saveCollectivity(collectivities);
+    }
+
+
+    public Collectivity assignIdentity(int collectivityId, AssignCollectivityIdentity payload) {
+
+        // 404 - collectivité introuvable
+        if (!collectivityRepository.collectivityExists(collectivityId)) {
+            throw new NotFoundException("Collectivité introuvable : id=" + collectivityId);
+        }
+
+        if (payload.getName() != null) {
+            // 409 - nom déjà attribué, immuable
+            if (collectivityRepository.hasName(collectivityId)) {
+                throw new BadRequestException(
+                        "Le nom de la collectivité id=" + collectivityId +
+                                " est déjà attribué et ne peut plus être modifié."
+                );
+            }
+            // 409 - nom déjà utilisé par une autre collectivité
+            if (collectivityRepository.nameAlreadyExists(payload.getName())) {
+                throw new BadRequestException(
+                        "Le nom \"" + payload.getName() + "\" est déjà utilisé par une autre collectivité."
+                );
+            }
+        }
+
+        if (payload.getNumber() != null) {
+            // 409 - numéro déjà attribué, immuable
+            if (collectivityRepository.hasNumber(collectivityId)) {
+                throw new BadRequestException(
+                        "Le numéro de la collectivité id=" + collectivityId +
+                                " est déjà attribué et ne peut plus être modifié."
+                );
+            }
+            // 409 - numéro déjà utilisé par une autre collectivité
+            if (collectivityRepository.numberAlreadyExists(payload.getNumber())) {
+                throw new BadRequestException(
+                        "Le numéro " + payload.getNumber() + " est déjà utilisé par une autre collectivité."
+                );
+            }
+        }
+
+        return collectivityRepository.assignIdentity(collectivityId, payload.getName(), payload.getNumber());
     }
 }

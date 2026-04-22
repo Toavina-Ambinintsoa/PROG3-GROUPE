@@ -1,14 +1,12 @@
 package com.example.agriculture.controller;
 
+import com.example.agriculture.entity.AssignCollectivityIdentity;
 import com.example.agriculture.entity.Collectivity;
 import com.example.agriculture.entity.CreateCollectivity;
 import com.example.agriculture.service.CollectivityService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.sql.SQLException;
 import java.util.List;
@@ -29,5 +27,13 @@ public class CollectivityController {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(collectivityService.createCollectivities(collectivities));
+    }
+
+    @PatchMapping("/{id}/identity")
+    @ResponseStatus(HttpStatus.OK)
+    public Collectivity assignIdentity(
+            @PathVariable int id,
+            @RequestBody AssignCollectivityIdentity payload) {
+        return collectivityService.assignIdentity(id, payload);
     }
 }

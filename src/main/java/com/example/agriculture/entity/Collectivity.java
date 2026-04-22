@@ -13,7 +13,17 @@ import java.util.List;
 @Component
 public class Collectivity {
     private String id;
+    private String name;
+    private Integer number;
+
     private String location;
     private CollectivityStructure structure;
     private List<Member> members;
+
+    public Collectivity(String collectivityId, String location, CollectivityStructure structure, List<Member> members) {
+        this.id = collectivityId;
+        this.location = location;
+        this.structure = structure;
+        this.members = members;
+    }
 }
