@@ -5,7 +5,8 @@ info:
     # Versioning
     This API uses semantic versioning (MAJOR.MINOR.PATCH). Available versions are : 
     - v0.0.1 (2026-04-21) : POST /collectivities for collectivities creation and POST /members for members creation.
-  version: 0.0.1
+    - v0.0.2 (2026-04-22) : PATCH /collectivities/{id}/identity for assigning a unique name and number to a collectivity.
+  version: 0.0.2
 servers:
   - url: 'https://localhost:8080'
 paths:
@@ -35,6 +36,43 @@ paths:
           description: Collectivity without federation approval or structure missing.
         404:
           description: Member not found.
+
+  '/collectivities/{id}/identity':
+    patch:
+      summary: Assign a unique name and/or number to a collectivity
+      description: |
+        Functionality J : Allows the federation to assign a unique name and/or a unique number
+        to an existing collectivity.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The internal ID of the collectivity to update.
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssignCollectivityIdentity'
+      responses:
+        200:
+          description: Collectivity successfully updated with its name and/or number.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Collectivity'
+        400:
+          description: |
+            Bad request in the following cases :
+            - The name is already assigned to this collectivity and cannot be changed.
+            - The number is already assigned to this collectivity and cannot be changed.
+            - The provided name is already used by another collectivity.
+            - The provided number is already used by another collectivity.
+        404:
+          description: Collectivity not found.
+
   '/members':
     post:
       summary: Create list of members
@@ -61,8 +99,22 @@ paths:
             - Membership dues not paid or registration fee not paid.
         404:
           description: Either collectivity or member not found.
+
 components:
   schemas:
+    AssignCollectivityIdentity:
+      type: object
+      description: |
+        Payload for assigning a unique name and/or number to a collectivity.
+        At least one of the two fields must be provided.
+      properties:
+        name:
+          type: string
+          description: Unique name to assign to the collectivity. Cannot be changed once set.
+        number:
+          type: integer
+          description: Unique number to assign to the collectivity. Cannot be changed once set.
+
     CreateCollectivity:
       type: object
       properties:
@@ -103,7 +155,13 @@ components:
       type: object
       properties:
         id:
+          type: integer
+        name:
           type: string
+          description: Unique name of the collectivity, assigned by the federation.
+        number:
+          type: integer
+          description: Unique number of the collectivity, assigned by the federation.
         location:
           type: string
         structure:
