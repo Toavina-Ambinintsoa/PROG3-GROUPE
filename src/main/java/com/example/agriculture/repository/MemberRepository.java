@@ -138,7 +138,7 @@ public class MemberRepository {
             stmt.setString(6, member.getProfession());
             stmt.setString(7, member.getPhoneNumber());
             stmt.setString(8, member.getEmail());
-            stmt.setString(9, MemberOccupation.JUNIOR.name());
+            stmt.setString(9, MemberOccupation.JUNIOR_MEMBER.name());
             stmt.setString(10, collectivityId);
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {

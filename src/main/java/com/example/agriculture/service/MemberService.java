@@ -54,7 +54,7 @@ public class MemberService {
         member.setProfession(cm.getProfession());
         member.setPhoneNumber(cm.getPhoneNumber());
         member.setEmail(cm.getEmail());
-        member.setMemberOccupation(MemberOccupation.JUNIOR);
+        member.setMemberOccupation(MemberOccupation.JUNIOR_MEMBER);
 
         List<Member> resolvedReferees = new ArrayList<>();
         for (int refereeId : cm.getRefereesIds()) {
