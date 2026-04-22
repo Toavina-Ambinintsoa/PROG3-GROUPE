@@ -11,5 +11,5 @@ public class CreateCollectivity {
     private String location;
     private List<Integer> memberIds;
     private Boolean federationApproval;
-    private CollectivityStructure collectivityStructure;
+    private CreateCollectivityStructure collectivityStructure;
 }
