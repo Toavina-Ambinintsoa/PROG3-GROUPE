@@ -12,8 +12,8 @@ import java.util.List;
 @NoArgsConstructor
 @Component
 public class Collectivity {
-    private int id;
+    private String id;
     private String location;
     private CollectivityStructure structure;
-    private List<Member> memberList;
+    private List<Member> members;
 }

@@ -30,20 +30,20 @@ public class CollectivityService {
         for (CreateCollectivity c : collectivities) {
 
             // 400 - autorisation fédération manquante ou structure nulle
-            if (!c.getFederationApproval() || c.getCollectivityStructure() == null) {
+            if (!c.getFederationApproval() || c.getStructure() == null) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                         "Federation approval or structure missing");
             }
 
             // 404 - membres introuvables
-            List<Member> members = memberRepository.findAllByIds(c.getMemberIds());
-            if (members.size() != c.getMemberIds().size()) {
+            List<Member> members = memberRepository.findAllByIds(c.getMembers());
+            if (members.size() != c.getMembers().size()) {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "One or more members not found");
             }
 
             // 400 - règle A : au moins 10 membres
-            if (c.getMemberIds().size() < 10) {
+            if (c.getMembers().size() < 10) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                         "At least 10 members required");
             }
@@ -59,10 +59,10 @@ public class CollectivityService {
 
             // 404 - membres de la structure introuvables
             List<Integer> structureIds = List.of(
-                    c.getCollectivityStructure().getPresidentId(),
-                    c.getCollectivityStructure().getVicePresidentId(),
-                    c.getCollectivityStructure().getTreasurerId(),
-                    c.getCollectivityStructure().getSecretaryId()
+                    c.getStructure().getPresident(),
+                    c.getStructure().getVicePresident(),
+                    c.getStructure().getTreasurer(),
+                    c.getStructure().getSecretary()
             );
             List<Member> structureMembers = memberRepository.findAllByIds(structureIds);
             if (structureMembers.size() != structureIds.size()) {

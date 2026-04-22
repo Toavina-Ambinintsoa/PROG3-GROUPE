@@ -22,6 +22,6 @@ public class MemberInformation {
     private String profession;
     private String phoneNumber;
     private String email;
-    private MemberOccupation memberOccupation;
+    private MemberOccupation occupation;
     private LocalDate adhesionDate;
 }

@@ -39,12 +39,12 @@ public class CollectivityRepository {
                     stmt.setString(1, c.getLocation());
                     ResultSet rs = stmt.executeQuery();
                     rs.next();
-                    int collectivityId = rs.getInt("id");
+                    String collectivityId = rs.getString("id");
 
-                    CollectivityStructure structure = saveStructure(conn, collectivityId, c.getCollectivityStructure());
-                    saveMembers(conn, collectivityId, c.getMemberIds());
+                    CollectivityStructure structure = saveStructure(conn, Integer.parseInt(collectivityId), c.getStructure());
+                    saveMembers(conn, Integer.parseInt(collectivityId), c.getMembers());
 
-                    List<Member> members = memberRepository.findAllByIds(c.getMemberIds());
+                    List<Member> members = memberRepository.findAllByIds(c.getMembers());
 
                     result.add(new Collectivity(collectivityId, c.getLocation(), structure, members));
                 }
@@ -69,28 +69,28 @@ public class CollectivityRepository {
 
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, collectivityId);
-            stmt.setInt(2, structure.getPresidentId());
-            stmt.setInt(3, structure.getVicePresidentId());
-            stmt.setInt(4, structure.getTreasurerId());
-            stmt.setInt(5, structure.getSecretaryId());
+            stmt.setInt(2, structure.getPresident());
+            stmt.setInt(3, structure.getVicePresident());
+            stmt.setInt(4, structure.getTreasurer());
+            stmt.setInt(5, structure.getSecretary());
             stmt.executeUpdate();
         }
 
         List<Member> structureMembers = memberRepository.findAllByIds(List.of(
-                structure.getPresidentId(),
-                structure.getVicePresidentId(),
-                structure.getTreasurerId(),
-                structure.getSecretaryId()
+                structure.getPresident(),
+                structure.getVicePresident(),
+                structure.getTreasurer(),
+                structure.getSecretary()
         ));
 
         Map<Integer, Member> memberMap = structureMembers.stream()
                 .collect(Collectors.toMap(Member::getId, m -> m));
 
         return new CollectivityStructure(
-                memberMap.get(structure.getPresidentId()),
-                memberMap.get(structure.getVicePresidentId()),
-                memberMap.get(structure.getTreasurerId()),
-                memberMap.get(structure.getSecretaryId())
+                memberMap.get(structure.getPresident()),
+                memberMap.get(structure.getVicePresident()),
+                memberMap.get(structure.getTreasurer()),
+                memberMap.get(structure.getSecretary())
         );
     }
 

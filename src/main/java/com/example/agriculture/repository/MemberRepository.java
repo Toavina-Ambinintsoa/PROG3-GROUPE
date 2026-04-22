@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 public class MemberRepository {
     private DataSource dataSource;
 
-    public MemberRepository(DataSource dataSource){
+    public MemberRepository(DataSource dataSource) {
         this.dataSource = dataSource;
     }
 
@@ -82,7 +82,7 @@ public class MemberRepository {
                 member.setProfession(rs.getString("profession"));
                 member.setPhoneNumber(rs.getString("phone_number"));
                 member.setEmail(rs.getString("email"));
-                member.setMemberOccupation(MemberOccupation.valueOf(rs.getString("occupation")));
+                member.setOccupation(MemberOccupation.valueOf(rs.getString("occupation")));
                 member.setAdhesionDate(rs.getDate("adhesion_date").toLocalDate());
                 members.add(member);
             }

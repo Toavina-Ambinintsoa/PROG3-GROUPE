@@ -9,7 +9,7 @@ import java.util.List;
 @Component
 public class CreateCollectivity {
     private String location;
-    private List<Integer> memberIds;
+    private List<Integer> members;
     private Boolean federationApproval;
-    private CreateCollectivityStructure collectivityStructure;
+    private CreateCollectivityStructure structure;
 }
