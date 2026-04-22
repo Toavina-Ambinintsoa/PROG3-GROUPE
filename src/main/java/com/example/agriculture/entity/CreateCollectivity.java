@@ -12,4 +12,5 @@ public class CreateCollectivity {
     private List<Integer> members;
     private Boolean federationApproval;
     private CreateCollectivityStructure structure;
+    private String specialty;
 }

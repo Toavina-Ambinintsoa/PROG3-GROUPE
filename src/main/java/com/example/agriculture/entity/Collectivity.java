@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Data
@@ -20,9 +21,14 @@ public class Collectivity {
     private CollectivityStructure structure;
     private List<Member> members;
 
-    public Collectivity(String collectivityId, String location, CollectivityStructure structure, List<Member> members) {
+    private String specialty;
+    private LocalDate createdAt;
+
+    public Collectivity(String collectivityId, String location, String specialty, LocalDate createdAt, CollectivityStructure structure, List<Member> members) {
         this.id = collectivityId;
         this.location = location;
+        this.specialty = specialty;
+        this.createdAt = createdAt;
         this.structure = structure;
         this.members = members;
     }

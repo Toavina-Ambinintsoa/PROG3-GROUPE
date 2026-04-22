@@ -27,7 +27,7 @@ public class CollectivityRepository {
 
     public List<Collectivity> saveCollectivity(List<CreateCollectivity> collectivities) throws SQLException {
 
-        String sql = "INSERT INTO collectivity (location) VALUES (?) RETURNING id";
+        String sql = "INSERT INTO collectivity (location, specialty) VALUES (?, ?) RETURNING id, created_at";
 
         List<Collectivity> result = new ArrayList<>();
 
@@ -38,6 +38,7 @@ public class CollectivityRepository {
 
                 for (CreateCollectivity c : collectivities) {
                     stmt.setString(1, c.getLocation());
+                    stmt.setString(2, c.getSpecialty());
                     ResultSet rs = stmt.executeQuery();
                     rs.next();
                     String collectivityId = rs.getString("id");
@@ -47,7 +48,7 @@ public class CollectivityRepository {
 
                     List<Member> members = memberRepository.findAllByIds(c.getMembers());
 
-                    result.add(new Collectivity(collectivityId, c.getLocation(), structure, members));
+                    result.add(new Collectivity(collectivityId, c.getLocation(), c.getSpecialty(), rs.getDate("created_at").toLocalDate(), structure, members));
                 }
 
                 conn.commit();
@@ -237,6 +238,8 @@ public class CollectivityRepository {
         c.setLocation(rs.getString("location"));
         c.setName(rs.getString("name"));
         c.setNumber(rs.getObject("number") != null ? rs.getInt("number") : null);
+        c.setSpecialty(rs.getString("specialty"));
+        c.setCreatedAt(rs.getDate("created_at").toLocalDate());
 
         CollectivityStructure structure = new CollectivityStructure();
         structure.setPresident(mapMember(rs, "p_"));

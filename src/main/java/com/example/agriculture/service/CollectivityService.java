@@ -5,6 +5,7 @@ import com.example.agriculture.entity.Collectivity;
 import com.example.agriculture.entity.CreateCollectivity;
 import com.example.agriculture.entity.Member;
 import com.example.agriculture.exception.BadRequestException;
+import com.example.agriculture.exception.ConflictException;
 import com.example.agriculture.exception.NotFoundException;
 import com.example.agriculture.repository.CollectivityRepository;
 import com.example.agriculture.repository.MemberRepository;
@@ -81,14 +82,14 @@ public class CollectivityService {
         if (payload.getName() != null) {
             // 409 - nom déjà attribué, immuable
             if (collectivityRepository.hasName(collectivityId)) {
-                throw new BadRequestException(
+                throw new ConflictException(
                         "Le nom de la collectivité id=" + collectivityId +
                                 " est déjà attribué et ne peut plus être modifié."
                 );
             }
             // 409 - nom déjà utilisé par une autre collectivité
             if (collectivityRepository.nameAlreadyExists(payload.getName())) {
-                throw new BadRequestException(
+                throw new ConflictException(
                         "Le nom \"" + payload.getName() + "\" est déjà utilisé par une autre collectivité."
                 );
             }
@@ -97,14 +98,14 @@ public class CollectivityService {
         if (payload.getNumber() != null) {
             // 409 - numéro déjà attribué, immuable
             if (collectivityRepository.hasNumber(collectivityId)) {
-                throw new BadRequestException(
+                throw new ConflictException(
                         "Le numéro de la collectivité id=" + collectivityId +
                                 " est déjà attribué et ne peut plus être modifié."
                 );
             }
             // 409 - numéro déjà utilisé par une autre collectivité
             if (collectivityRepository.numberAlreadyExists(payload.getNumber())) {
-                throw new BadRequestException(
+                throw new ConflictException(
                         "Le numéro " + payload.getNumber() + " est déjà utilisé par une autre collectivité."
                 );
             }
