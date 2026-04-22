@@ -19,8 +19,8 @@ public class MemberRepository {
         this.dataSource = dataSource;
     }
 
-    public boolean collectivityExists(String collectivityId) { // String, pas Long
-        String sql = "SELECT COUNT(*) FROM collectivity WHERE id = ?";
+    public boolean collectivityExists(String collectivityId) {
+        String sql = "SELECT COUNT(id) FROM collectivity WHERE id = ?";
         try (Connection conn = dataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, collectivityId);
@@ -83,7 +83,7 @@ public class MemberRepository {
     }
 
     public boolean memberExists(int memberId) {
-        String sql = "SELECT COUNT(*) FROM member WHERE id = ?";
+        String sql = "SELECT COUNT(id) FROM member WHERE id = ?";
         try (Connection conn = dataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, memberId);
@@ -108,7 +108,7 @@ public class MemberRepository {
     }
 
     public boolean isSeniorMember(int memberId) {
-        String sql = "SELECT COUNT(*) FROM member WHERE id = ? AND occupation = 'SENIOR'";
+        String sql = "SELECT COUNT(id) FROM member WHERE id = ? AND occupation = 'SENIOR'";
         try (Connection conn = dataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, memberId);
