@@ -109,7 +109,7 @@ public class CollectivityRepository {
     }
 
     public boolean collectivityExists(int collectivityId) {
-        String sql = "SELECT COUNT(*) FROM collectivity WHERE id = ?";
+        String sql = "SELECT COUNT(id) FROM collectivity WHERE id = ?";
         try (Connection conn = dataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, collectivityId);
@@ -121,7 +121,7 @@ public class CollectivityRepository {
     }
 
     public boolean nameAlreadyExists(String name) {
-        String sql = "SELECT COUNT(*) FROM collectivity WHERE name = ?";
+        String sql = "SELECT COUNT(id) FROM collectivity WHERE name = ?";
         try (Connection conn = dataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, name);
@@ -133,7 +133,7 @@ public class CollectivityRepository {
     }
 
     public boolean numberAlreadyExists(int number) {
-        String sql = "SELECT COUNT(*) FROM collectivity WHERE number = ?";
+        String sql = "SELECT COUNT(id) FROM collectivity WHERE number = ?";
         try (Connection conn = dataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, number);
