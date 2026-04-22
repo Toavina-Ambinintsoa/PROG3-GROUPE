@@ -207,7 +207,7 @@ public class CollectivityRepository {
 
     public Collectivity findById(int collectivityId) {
         String sql = """
-                SELECT c.id, c.location, c.name, c.number,
+                SELECT c.id, c.location, c.name, c.number, c.specialty, c.created_at,
                        p.id  AS p_id,  p.first_name AS p_fn,  p.last_name AS p_ln,  p.occupation AS p_occ,
                        vp.id AS vp_id, vp.first_name AS vp_fn, vp.last_name AS vp_ln, vp.occupation AS vp_occ,
                        t.id  AS t_id,  t.first_name  AS t_fn,  t.last_name  AS t_ln,  t.occupation  AS t_occ,
