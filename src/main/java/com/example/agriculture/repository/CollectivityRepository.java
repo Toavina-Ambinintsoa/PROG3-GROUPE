@@ -254,14 +254,21 @@ public class CollectivityRepository {
     }
 
     private List<Member> findMembersByCollectivityId(int collectivityId) throws SQLException {
-        String sql = "SELECT member_id FROM collectivity_member WHERE collectivity_id = ?";
+        String sql = """
+                SELECT DISTINCT id FROM (
+                    SELECT id FROM member WHERE collectivity_id = ?
+                    UNION
+                    SELECT member_id AS id FROM collectivity_member WHERE collectivity_id = ?
+                ) AS all_members
+                """;
         List<Integer> memberIds = new ArrayList<>();
         try (Connection conn = dataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, collectivityId);
+            stmt.setInt(2, collectivityId);
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
-                memberIds.add(rs.getInt("member_id"));
+                memberIds.add(rs.getInt("id"));
             }
         } catch (SQLException e) {
             throw new RuntimeException(e);
