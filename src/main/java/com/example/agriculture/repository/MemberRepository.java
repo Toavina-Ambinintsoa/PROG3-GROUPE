@@ -29,8 +29,6 @@ public class MemberRepository {
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
-
-        return false;
     }
 
     public List<Member> findAllByIds(List<Integer> memberIds) throws SQLException {
