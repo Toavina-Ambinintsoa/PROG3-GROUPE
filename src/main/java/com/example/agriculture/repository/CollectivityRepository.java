@@ -213,10 +213,11 @@ public class CollectivityRepository {
                        t.id  AS t_id,  t.first_name  AS t_fn,  t.last_name  AS t_ln,  t.occupation  AS t_occ,
                        s.id  AS s_id,  s.first_name  AS s_fn,  s.last_name  AS s_ln,  s.occupation  AS s_occ
                 FROM collectivity c
-                LEFT JOIN member p  ON c.president_id      = p.id
-                LEFT JOIN member vp ON c.vice_president_id = vp.id
-                LEFT JOIN member t  ON c.treasurer_id      = t.id
-                LEFT JOIN member s  ON c.secretary_id      = s.id
+                LEFT JOIN collectivity_structure cs ON cs.collectivity_id = c.id
+                LEFT JOIN member p  ON cs.president_id      = p.id
+                LEFT JOIN member vp ON cs.vice_president_id = vp.id
+                LEFT JOIN member t  ON cs.treasurer_id      = t.id
+                LEFT JOIN member s  ON cs.secretary_id      = s.id
                 WHERE c.id = ?
                 """;
         try (Connection conn = dataSource.getConnection();
@@ -234,7 +235,8 @@ public class CollectivityRepository {
 
     private Collectivity mapRow(ResultSet rs) throws SQLException {
         Collectivity c = new Collectivity();
-        c.setId(String.valueOf(rs.getInt("id")));
+        int collectivityId = rs.getInt("id");
+        c.setId(String.valueOf(collectivityId));
         c.setLocation(rs.getString("location"));
         c.setName(rs.getString("name"));
         c.setNumber(rs.getObject("number") != null ? rs.getInt("number") : null);
@@ -247,8 +249,24 @@ public class CollectivityRepository {
         structure.setTreasurer(mapMember(rs, "t_"));
         structure.setSecretary(mapMember(rs, "s_"));
         c.setStructure(structure);
-
+        c.setMembers(findMembersByCollectivityId(collectivityId));
         return c;
+    }
+
+    private List<Member> findMembersByCollectivityId(int collectivityId) throws SQLException {
+        String sql = "SELECT member_id FROM collectivity_member WHERE collectivity_id = ?";
+        List<Integer> memberIds = new ArrayList<>();
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, collectivityId);
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                memberIds.add(rs.getInt("member_id"));
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        return memberIds.isEmpty() ? new ArrayList<>() : memberRepository.findAllByIds(memberIds);
     }
 
     private Member mapMember(ResultSet rs, String prefix) throws SQLException {
