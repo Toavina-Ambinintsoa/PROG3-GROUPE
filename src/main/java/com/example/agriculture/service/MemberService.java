@@ -1,11 +1,13 @@
 package com.example.agriculture.service;
 
 import com.example.agriculture.entity.CreateMember;
+import com.example.agriculture.entity.CreateMemberPayment;
 import com.example.agriculture.entity.Enum.MemberOccupation;
 import com.example.agriculture.entity.Member;
 import com.example.agriculture.exception.BadRequestException;
 import com.example.agriculture.exception.NotFoundException;
 import com.example.agriculture.repository.MemberRepository;
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -101,5 +103,11 @@ public class MemberService {
                             ") doit être >= au nombre de parrains extérieurs (" + outsideCount + ")."
             );
         }
+    }
+
+    /// TODO: implementing
+
+    public @Nullable Object createMemberPayment(String id, CreateMemberPayment payment) {
+        throw new RuntimeException("Not implemented yet");
     }
 }

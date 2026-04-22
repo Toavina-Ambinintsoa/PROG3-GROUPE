@@ -1,14 +1,13 @@
 package com.example.agriculture.service;
 
-import com.example.agriculture.entity.AssignCollectivityIdentity;
-import com.example.agriculture.entity.Collectivity;
-import com.example.agriculture.entity.CreateCollectivity;
-import com.example.agriculture.entity.Member;
+import com.example.agriculture.entity.*;
 import com.example.agriculture.exception.BadRequestException;
 import com.example.agriculture.exception.ConflictException;
 import com.example.agriculture.exception.NotFoundException;
 import com.example.agriculture.repository.CollectivityRepository;
 import com.example.agriculture.repository.MemberRepository;
+import org.jspecify.annotations.Nullable;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.sql.SQLException;
@@ -112,5 +111,20 @@ public class CollectivityService {
         }
 
         return collectivityRepository.assignIdentity(collectivityId, payload.getName(), payload.getNumber());
+    }
+
+
+    /// TODO: implementing
+
+    public MembershipFee getMembershipFee(String id) {
+        throw new RuntimeException("Not implemented yet");
+    }
+
+    public @Nullable MembershipFee createMembershipFee(String id, List<CreateMembershipFee> payload) {
+        throw new RuntimeException("Not implemented yet");
+    }
+
+    public @Nullable Object getTransactions(String id, LocalDate from, LocalDate to) {
+        throw new RuntimeException("Not implemented yet");
     }
 }
