@@ -13,7 +13,6 @@ public class DataSource {
     private final String user = System.getenv("USER");
     private final String password = System.getenv("PASSWORD");
 
-    @Bean
     public Connection getConnection() {
         try {
             return DriverManager.getConnection(jdbcURl, user, password);
