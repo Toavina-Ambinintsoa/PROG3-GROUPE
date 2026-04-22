@@ -77,19 +77,16 @@ public class MemberService {
 
         for (int refereeId : refereeIds) {
 
-            // Vérifier que le parrain existe
             if (!memberRepository.memberExists(refereeId)) {
                 throw new NotFoundException("Parrain introuvable : id=" + refereeId);
             }
 
-            // Vérifier que le parrain est SENIOR (membre confirmé)
             if (!memberRepository.isSeniorMember(refereeId)) {
                 throw new BadRequestException(
                         "Le parrain id=" + refereeId + " n'est pas un membre confirmé (SENIOR)."
                 );
             }
 
-            // Compter : parrain interne (même collectivité) ou externe
             String refereeCollectivityId = memberRepository.getCollectivityIdOfMember(refereeId);
             if (targetCollectivityId.equals(refereeCollectivityId)) {
                 insideCount++;
@@ -98,7 +95,6 @@ public class MemberService {
             }
         }
 
-        // Règle : parrains internes >= parrains externes
         if (insideCount < outsideCount) {
             throw new BadRequestException(
                     "Le nombre de parrains de la collectivité cible (" + insideCount +
