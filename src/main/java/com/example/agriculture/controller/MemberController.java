@@ -35,7 +35,7 @@ public class MemberController {
         }
     }
 
-    @PostMapping("/{id}/{payment}")
+    @PostMapping("/{id}/payment")
     public ResponseEntity<?> createPayments(
             @PathVariable String id,
             @RequestBody List<CreateMemberPayment> payments) {

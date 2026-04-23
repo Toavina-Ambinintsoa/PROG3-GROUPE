@@ -13,6 +13,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 @Repository
 public class FinancialAccountRepository {
@@ -137,5 +139,77 @@ public class FinancialAccountRepository {
         } else {
             creditBankAccount(conn, accountId, amount);
         }
+    }
+
+    public List<FinancialAccount> findByCollectivityId(String collectivityId) {
+
+        String sql = """
+            SELECT *
+            FROM financial_account
+            WHERE collectivity_id = ?
+            """;
+
+        List<FinancialAccount> accounts = new ArrayList<>();
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, collectivityId);
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                FinancialAccount account = mapResultSetToAccount(rs);
+                accounts.add(account);
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+
+        return accounts;
+    }
+
+    private FinancialAccount mapResultSetToAccount(ResultSet rs) throws SQLException {
+
+        String type = rs.getString("type");
+
+        FinancialAccount account;
+
+        switch (type) {
+
+            case "CASH":
+                CashAccount cash = new CashAccount();
+                cash.setId(rs.getString("id"));
+                cash.setAmount(rs.getDouble("amount"));
+                account = cash;
+                break;
+
+            case "MOBILE_BANKING":
+                MobileBankingAccount mobile = new MobileBankingAccount();
+                mobile.setId(rs.getString("id"));
+                mobile.setAmount(rs.getDouble("amount"));
+                mobile.setHolderName(rs.getString("holder_name"));
+                mobile.setMobileNumber(rs.getString("mobile_number"));
+                mobile.setMobileBankingService(
+                        MobileBankingService.valueOf(rs.getString("mobile_service"))
+                );
+                account = mobile;
+                break;
+
+            case "BANK_TRANSFER":
+                BankAccount bank = new BankAccount();
+                bank.setId(rs.getString("id"));
+                bank.setAmount(rs.getDouble("amount"));
+                bank.setHolderName(rs.getString("holder_name"));
+                bank.setBankName(Bank.valueOf(rs.getString("bank_name")));
+                bank.setBankAccountNumber(rs.getString("account_number"));
+                account = bank;
+                break;
+
+            default:
+                throw new RuntimeException("Unknown account type: " + type);
+        }
+
+        return account;
     }
 }
