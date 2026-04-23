@@ -110,6 +110,26 @@ paths:
           description: Either unrecognized frequency or amount under 0.
         404:
           description: Collectivity not found.
+  '/collectivities/{id}':
+    get:
+      summary: Get a collectivity by its ID
+      description: |
+        Returns a collectivity with its members.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Collectivity found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Collectivity'
+        404:
+          description: Collectivity not found
   '/collectivities/{id}/transactions':
     get:
       summary: Retrieve specific collectivity transactions for a given period
@@ -146,6 +166,36 @@ paths:
           description: Provided query parameters occur some exceptions.
         404:
           description: Collectivity not found.
+  '/collectivities/{id}/financialAccounts':
+    get:
+      summary: Get financial accounts of a collectivity
+      description: |
+        Returns all financial accounts (cash, mobile money, bank)
+        with their balance at a given date.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: at
+          in: query
+          required: true
+          description: Date to evaluate account balance
+          schema:
+            type: string
+            format: date
+      responses:
+        200:
+          description: List of financial accounts with balances
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FinancialAccount'
+        404:
+          description: Collectivity not found
   '/members':
     post:
       summary: Create list of members
