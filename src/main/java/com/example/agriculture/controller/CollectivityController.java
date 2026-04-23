@@ -43,7 +43,7 @@ public class CollectivityController {
             @PathVariable int id,
             @RequestBody AssignCollectivityIdentity payload) {
         try {
-            return ResponseEntity.ok(collectivityService.assignIdentity(id, payload));
+            return ResponseEntity.ok(collectivityService.assignIdentity(String.valueOf(id), payload));
         } catch (NotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         } catch (ConflictException e) {
