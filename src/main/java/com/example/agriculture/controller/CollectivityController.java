@@ -54,7 +54,7 @@ public class CollectivityController {
     @GetMapping("/{id}/membershipFees")
     public ResponseEntity<?> getMembershipFees(@PathVariable String id) {
         try {
-            return ResponseEntity.ok(collectivityService.getMembershipFees(id));
+            return ResponseEntity.ok(collectivityService.getMembershipFee(id));
         } catch (NotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
@@ -66,7 +66,7 @@ public class CollectivityController {
             @RequestBody List<CreateMembershipFee> fees) {
         try {
             return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(collectivityService.createMembershipFees(id, fees));
+                    .body(collectivityService.createMembershipFee(id, fees));
         } catch (BadRequestException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         } catch (NotFoundException e) {
