@@ -1,12 +1,18 @@
 package com.example.agriculture.repository;
 
 import com.example.agriculture.config.DataSource;
-import com.example.agriculture.entity.*;
+import com.example.agriculture.entity.BankAccount;
+import com.example.agriculture.entity.CashAccount;
 import com.example.agriculture.entity.Enum.Bank;
 import com.example.agriculture.entity.Enum.MobileBankingService;
+import com.example.agriculture.entity.FinancialAccount;
+import com.example.agriculture.entity.MobileBankingAccount;
 import org.springframework.stereotype.Repository;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 @Repository
 public class FinancialAccountRepository {
@@ -17,10 +23,6 @@ public class FinancialAccountRepository {
         this.dataSource = dataSource;
     }
 
-    /**
-     * Find a financial account by its id.
-     * Tries each account type table in order.
-     */
     public FinancialAccount findById(String accountId) {
         FinancialAccount account;
         account = findCashAccount(accountId);
@@ -34,8 +36,6 @@ public class FinancialAccountRepository {
     public boolean exists(String accountId) {
         return findById(accountId) != null;
     }
-
-    // ---------- cash ----------
 
     public CashAccount findCashAccount(String accountId) {
         String sql = "SELECT id, amount FROM financial_account_cash WHERE id = ?";
@@ -63,8 +63,6 @@ public class FinancialAccountRepository {
             stmt.executeUpdate();
         }
     }
-
-    // ---------- mobile banking ----------
 
     public MobileBankingAccount findMobileBankingAccount(String accountId) {
         String sql = "SELECT id, amount, holder_name, service, mobile_number " +
@@ -96,8 +94,6 @@ public class FinancialAccountRepository {
             stmt.executeUpdate();
         }
     }
-
-    // ---------- bank ----------
 
     public BankAccount findBankAccount(String accountId) {
         String sql = "SELECT id, amount, holder_name, bank_name, bank_code, branch_code, " +
@@ -133,9 +129,6 @@ public class FinancialAccountRepository {
         }
     }
 
-    /**
-     * Credit any account type (dispatches to the right table).
-     */
     public void creditAccount(Connection conn, String accountId, double amount) throws SQLException {
         if (findCashAccount(accountId) != null) {
             creditCashAccount(conn, accountId, amount);

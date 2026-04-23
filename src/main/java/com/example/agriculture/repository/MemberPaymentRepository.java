@@ -1,12 +1,14 @@
 package com.example.agriculture.repository;
 
 import com.example.agriculture.config.DataSource;
-import com.example.agriculture.entity.FinancialAccount;
-import com.example.agriculture.entity.MemberPayment;
 import com.example.agriculture.entity.Enum.PaymentMode;
+import com.example.agriculture.entity.MemberPayment;
 import org.springframework.stereotype.Repository;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,7 +26,7 @@ public class MemberPaymentRepository {
 
     public MemberPayment save(Connection conn,
                               int memberId,
-                              double amount,
+                              int amount,
                               PaymentMode paymentMode,
                               String membershipFeeId,
                               String accountCreditedId) throws SQLException {
@@ -68,7 +70,7 @@ public class MemberPaymentRepository {
             while (rs.next()) {
                 MemberPayment p = new MemberPayment();
                 p.setId(rs.getString("id"));
-                p.setAmount(rs.getDouble("amount"));
+                p.setAmount(rs.getInt("amount"));
                 p.setPaymentMode(PaymentMode.valueOf(rs.getString("payment_mode")));
                 p.setCreationDate(rs.getDate("creation_date").toLocalDate());
                 p.setAccountCredited(

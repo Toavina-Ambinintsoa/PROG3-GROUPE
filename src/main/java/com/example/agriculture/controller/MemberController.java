@@ -3,6 +3,7 @@ package com.example.agriculture.controller;
 import com.example.agriculture.entity.CreateMember;
 import com.example.agriculture.entity.CreateMemberPayment;
 import com.example.agriculture.entity.Member;
+import com.example.agriculture.entity.MemberPayment;
 import com.example.agriculture.exception.BadRequestException;
 import com.example.agriculture.exception.NotFoundException;
 import com.example.agriculture.service.MemberService;
@@ -35,17 +36,16 @@ public class MemberController {
     }
 
     @PostMapping("/{id}/{payment}")
-    public ResponseEntity<?> createPayment(
+    public ResponseEntity<?> createPayments(
             @PathVariable String id,
-            @RequestBody CreateMemberPayment payment
-    )
-    {
+            @RequestBody List<CreateMemberPayment> payments) {
         try {
-            return ResponseEntity
-                    .status(HttpStatus.CREATED)
-                    .body(memberService.createMemberPayment(id, payment));
-        }catch (Exception e){
-            throw new RuntimeException("Not implemented yet");
+            List<MemberPayment> result = memberService.createMemberPayments(id, payments);
+            return ResponseEntity.status(HttpStatus.CREATED).body(result);
+        } catch (BadRequestException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        } catch (NotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
     }
 }

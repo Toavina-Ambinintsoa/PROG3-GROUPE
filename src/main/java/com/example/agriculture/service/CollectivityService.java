@@ -4,10 +4,7 @@ import com.example.agriculture.entity.*;
 import com.example.agriculture.exception.BadRequestException;
 import com.example.agriculture.exception.ConflictException;
 import com.example.agriculture.exception.NotFoundException;
-import com.example.agriculture.repository.CollectivityRepository;
-import com.example.agriculture.repository.MemberRepository;
-import org.jspecify.annotations.Nullable;
-import org.springframework.http.ResponseEntity;
+import com.example.agriculture.repository.*;
 import org.springframework.stereotype.Service;
 
 import java.sql.SQLException;
@@ -19,42 +16,44 @@ public class CollectivityService {
 
     private final CollectivityRepository collectivityRepository;
     private final MemberRepository memberRepository;
+    private final MembershipFeeRepository membershipFeeRepository;
+    private final TransactionRepository transactionRepository;
 
     public CollectivityService(CollectivityRepository collectivityRepository,
-                               MemberRepository memberRepository) {
+                               MemberRepository memberRepository,
+                               MembershipFeeRepository membershipFeeRepository,
+                               TransactionRepository transactionRepository) {
         this.collectivityRepository = collectivityRepository;
         this.memberRepository = memberRepository;
+        this.membershipFeeRepository = membershipFeeRepository;
+        this.transactionRepository = transactionRepository;
     }
 
     public List<Collectivity> createCollectivities(List<CreateCollectivity> collectivities) throws SQLException {
 
         for (CreateCollectivity c : collectivities) {
 
-            // 400 - autorisation fédération manquante ou structure nulle
             if (!c.getFederationApproval() || c.getStructure() == null) {
                 throw new BadRequestException("Federation approval or structure missing");
             }
 
-            // 404 - membres introuvables
             List<Member> members = memberRepository.findAllByIds(c.getMembers());
             if (members.size() != c.getMembers().size()) {
                 throw new NotFoundException("One or more members not found");
             }
 
-            // 400 - règle A : au moins 10 membres
             if (c.getMembers().size() < 10) {
                 throw new BadRequestException("At least 10 members required");
             }
 
-            // 400 - règle A : au moins 5 membres avec ancienneté > 6 mois
             long seniorCount = members.stream()
-                    .filter(m -> m.getAdhesionDate().isBefore(LocalDate.now().minusMonths(6)))
+                    .filter(m -> m.getAdhesionDate() != null &&
+                            m.getAdhesionDate().isBefore(LocalDate.now().minusMonths(6)))
                     .count();
             if (seniorCount < 5) {
                 throw new BadRequestException("At least 5 members with 6 months seniority required");
             }
 
-            // 404 - membres de la structure introuvables
             List<Integer> structureIds = List.of(
                     c.getStructure().getPresident(),
                     c.getStructure().getVicePresident(),
@@ -70,61 +69,76 @@ public class CollectivityService {
         return collectivityRepository.saveCollectivity(collectivities);
     }
 
-
     public Collectivity assignIdentity(int collectivityId, AssignCollectivityIdentity payload) {
 
-        // 404 - collectivité introuvable
         if (!collectivityRepository.collectivityExists(collectivityId)) {
             throw new NotFoundException("Collectivité introuvable : id=" + collectivityId);
         }
 
         if (payload.getName() != null) {
-            // 409 - nom déjà attribué, immuable
             if (collectivityRepository.hasName(collectivityId)) {
                 throw new ConflictException(
                         "Le nom de la collectivité id=" + collectivityId +
-                                " est déjà attribué et ne peut plus être modifié."
-                );
+                                " est déjà attribué et ne peut plus être modifié.");
             }
-            // 409 - nom déjà utilisé par une autre collectivité
             if (collectivityRepository.nameAlreadyExists(payload.getName())) {
                 throw new ConflictException(
-                        "Le nom \"" + payload.getName() + "\" est déjà utilisé par une autre collectivité."
-                );
+                        "Le nom \"" + payload.getName() + "\" est déjà utilisé par une autre collectivité.");
             }
         }
 
         if (payload.getNumber() != null) {
-            // 409 - numéro déjà attribué, immuable
             if (collectivityRepository.hasNumber(collectivityId)) {
                 throw new ConflictException(
                         "Le numéro de la collectivité id=" + collectivityId +
-                                " est déjà attribué et ne peut plus être modifié."
-                );
+                                " est déjà attribué et ne peut plus être modifié.");
             }
-            // 409 - numéro déjà utilisé par une autre collectivité
             if (collectivityRepository.numberAlreadyExists(payload.getNumber())) {
                 throw new ConflictException(
-                        "Le numéro " + payload.getNumber() + " est déjà utilisé par une autre collectivité."
-                );
+                        "Le numéro " + payload.getNumber() + " est déjà utilisé par une autre collectivité.");
             }
         }
 
         return collectivityRepository.assignIdentity(collectivityId, payload.getName(), payload.getNumber());
     }
 
-
-    /// TODO: implementing
-
-    public MembershipFee getMembershipFee(String id) {
-        throw new RuntimeException("Not implemented yet");
+    public List<MembershipFee> getMembershipFee(String collectivityId) {
+        if (!collectivityRepository.collectivityExists(Integer.parseInt(collectivityId))) {
+            throw new NotFoundException("Collectivité introuvable : id=" + collectivityId);
+        }
+        return membershipFeeRepository.findByCollectivityId(collectivityId);
     }
 
-    public @Nullable MembershipFee createMembershipFee(String id, List<CreateMembershipFee> payload) {
-        throw new RuntimeException("Not implemented yet");
+    public List<MembershipFee> createMembershipFee(String collectivityId,
+                                                    List<CreateMembershipFee> fees) {
+        if (!collectivityRepository.collectivityExists(Integer.parseInt(collectivityId))) {
+            throw new NotFoundException("Collectivité introuvable : id=" + collectivityId);
+        }
+
+        for (CreateMembershipFee fee : fees) {
+            if (fee.getFrequency() == null) {
+                throw new BadRequestException("Fréquence non reconnue pour la cotisation : " + fee.getLabel());
+            }
+            if (fee.getAmount() < 0) {
+                throw new BadRequestException("Le montant de la cotisation ne peut pas être négatif.");
+            }
+        }
+
+        return membershipFeeRepository.save(collectivityId, fees);
     }
 
-    public @Nullable Object getTransactions(String id, LocalDate from, LocalDate to) {
-        throw new RuntimeException("Not implemented yet");
+    public List<CollectivityTransaction> getTransactions(String collectivityId,
+                                                         LocalDate from,
+                                                         LocalDate to) {
+        if (!collectivityRepository.collectivityExists(Integer.parseInt(collectivityId))) {
+            throw new NotFoundException("Collectivité introuvable : id=" + collectivityId);
+        }
+        if (from == null || to == null) {
+            throw new BadRequestException("Les paramètres 'from' et 'to' sont obligatoires.");
+        }
+        if (from.isAfter(to)) {
+            throw new BadRequestException("La date 'from' ne peut pas être après la date 'to'.");
+        }
+        return transactionRepository.findByCollectivityIdAndPeriod(collectivityId, from, to);
     }
 }

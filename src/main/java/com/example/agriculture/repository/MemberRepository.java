@@ -170,4 +170,20 @@ public class MemberRepository {
         member.setAdhesionDate(rs.getDate("adhesion_date").toLocalDate());
         return member;
     }
+
+    public void saveReferees(int memberId, List<Integer> refereeIds) {
+        if (refereeIds == null || refereeIds.isEmpty()) return;
+        String sql = "INSERT INTO member_referee (member_id, referee_id) VALUES (?, ?)";
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            for (int refereeId : refereeIds) {
+                stmt.setInt(1, memberId);
+                stmt.setInt(2, refereeId);
+                stmt.addBatch();
+            }
+            stmt.executeBatch();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

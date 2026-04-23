@@ -1,7 +1,7 @@
 package com.example.agriculture.repository;
 
 import com.example.agriculture.config.DataSource;
-import com.example.agriculture.entity.*;
+import com.example.agriculture.entity.CollectivityTransaction;
 import com.example.agriculture.entity.Enum.PaymentMode;
 import org.springframework.stereotype.Repository;
 
@@ -25,9 +25,6 @@ public class TransactionRepository {
         this.financialAccountRepository = financialAccountRepository;
     }
 
-    /**
-     * Record a transaction inside the collectivity (called automatically when a member pays).
-     */
     public CollectivityTransaction save(Connection conn,
                                         String collectivityId,
                                         int memberId,
