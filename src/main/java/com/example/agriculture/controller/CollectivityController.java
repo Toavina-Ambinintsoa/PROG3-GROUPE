@@ -2,8 +2,10 @@ package com.example.agriculture.controller;
 
 import com.example.agriculture.entity.*;
 import com.example.agriculture.exception.BadRequestException;
+import com.example.agriculture.exception.ConflictException;
 import com.example.agriculture.exception.NotFoundException;
 import com.example.agriculture.service.CollectivityService;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -36,57 +38,53 @@ public class CollectivityController {
         }
     }
 
-    /// TODO: adding try catch to control errors
-
     @PatchMapping("/{id}/identity")
-    @ResponseStatus(HttpStatus.OK)
-    public Collectivity assignIdentity(
+    public ResponseEntity<?> assignIdentity(
             @PathVariable int id,
             @RequestBody AssignCollectivityIdentity payload) {
-        return collectivityService.assignIdentity(id, payload);
+        try {
+            return ResponseEntity.ok(collectivityService.assignIdentity(id, payload));
+        } catch (NotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (ConflictException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+        }
     }
 
     @GetMapping("/{id}/membershipFees")
-    public ResponseEntity<MembershipFee> getMembershipFee(
-            @PathVariable String id
-    ){
+    public ResponseEntity<?> getMembershipFees(@PathVariable String id) {
         try {
-            return ResponseEntity
-                    .status(200)
-                    .body(collectivityService.getMembershipFee(id));
-        }catch (Exception e){
-            throw new BadRequestException("Not implemented yet");
+            return ResponseEntity.ok(collectivityService.getMembershipFees(id));
+        } catch (NotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
-
     }
 
     @PostMapping("/{id}/membershipFees")
-    public ResponseEntity<MembershipFee> createMembershipFee(
+    public ResponseEntity<?> createMembershipFees(
             @PathVariable String id,
-            @RequestBody List<CreateMembershipFee> payload
-    ){
+            @RequestBody List<CreateMembershipFee> fees) {
         try {
-            return ResponseEntity
-                    .status(201)
-                    .body(collectivityService.createMembershipFee(id, payload));
-        }catch (BadRequestException e){
-            throw new RuntimeException("Not implemented yet");
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(collectivityService.createMembershipFees(id, fees));
+        } catch (BadRequestException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        } catch (NotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
     }
 
-    @GetMapping("/{id}/transaction")
+    @GetMapping("/{id}/transactions")
     public ResponseEntity<?> getTransactions(
             @PathVariable String id,
-            @RequestParam LocalDate from,
-            @RequestParam LocalDate to
-            )
-    {
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
         try {
-            return ResponseEntity
-                    .status(HttpStatus.OK)
-                    .body(collectivityService.getTransactions(id, from, to));
-        }catch (Exception e){
-            throw new RuntimeException("Not implemented yet");
+            return ResponseEntity.ok(collectivityService.getTransactions(id, from, to));
+        } catch (BadRequestException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        } catch (NotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
     }
 }

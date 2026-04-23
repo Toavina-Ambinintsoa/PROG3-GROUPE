@@ -3,6 +3,8 @@ package com.example.agriculture.controller;
 import com.example.agriculture.entity.CreateMember;
 import com.example.agriculture.entity.CreateMemberPayment;
 import com.example.agriculture.entity.Member;
+import com.example.agriculture.exception.BadRequestException;
+import com.example.agriculture.exception.NotFoundException;
 import com.example.agriculture.service.MemberService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,9 +23,15 @@ public class MemberController {
     }
 
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public List<Member> createMembers(@RequestBody List<CreateMember> requests) {
-        return memberService.createMembers(requests);
+    public ResponseEntity<?> createMembers(@RequestBody List<CreateMember> requests) {
+        try {
+            List<Member> created = memberService.createMembers(requests);
+            return ResponseEntity.status(HttpStatus.CREATED).body(created);
+        } catch (BadRequestException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        } catch (NotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
     }
 
     @PostMapping("/{id}/{payment}")
