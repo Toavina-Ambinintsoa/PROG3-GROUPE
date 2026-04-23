@@ -5,6 +5,7 @@ import com.example.agriculture.exception.BadRequestException;
 import com.example.agriculture.exception.ConflictException;
 import com.example.agriculture.exception.NotFoundException;
 import com.example.agriculture.repository.*;
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.sql.SQLException;
@@ -18,15 +19,17 @@ public class CollectivityService {
     private final MemberRepository memberRepository;
     private final MembershipFeeRepository membershipFeeRepository;
     private final TransactionRepository transactionRepository;
+    private final FinancialAccountRepository financialAccountRepository;
 
     public CollectivityService(CollectivityRepository collectivityRepository,
                                MemberRepository memberRepository,
                                MembershipFeeRepository membershipFeeRepository,
-                               TransactionRepository transactionRepository) {
+                               TransactionRepository transactionRepository, FinancialAccountRepository financialAccountRepository) {
         this.collectivityRepository = collectivityRepository;
         this.memberRepository = memberRepository;
         this.membershipFeeRepository = membershipFeeRepository;
         this.transactionRepository = transactionRepository;
+        this.financialAccountRepository = financialAccountRepository;
     }
 
     public List<Collectivity> createCollectivities(List<CreateCollectivity> collectivities) throws SQLException {
@@ -69,7 +72,7 @@ public class CollectivityService {
         return collectivityRepository.saveCollectivity(collectivities);
     }
 
-    public Collectivity assignIdentity(int collectivityId, AssignCollectivityIdentity payload) {
+    public Collectivity assignIdentity(String collectivityId, AssignCollectivityIdentity payload) {
 
         if (!collectivityRepository.collectivityExists(collectivityId)) {
             throw new NotFoundException("Collectivité introuvable : id=" + collectivityId);
@@ -103,7 +106,7 @@ public class CollectivityService {
     }
 
     public List<MembershipFee> getMembershipFee(String collectivityId) {
-        if (!collectivityRepository.collectivityExists(Integer.parseInt(collectivityId))) {
+        if (!collectivityRepository.collectivityExists(collectivityId)) {
             throw new NotFoundException("Collectivité introuvable : id=" + collectivityId);
         }
         return membershipFeeRepository.findByCollectivityId(collectivityId);
@@ -111,7 +114,7 @@ public class CollectivityService {
 
     public List<MembershipFee> createMembershipFee(String collectivityId,
                                                     List<CreateMembershipFee> fees) {
-        if (!collectivityRepository.collectivityExists(Integer.parseInt(collectivityId))) {
+        if (!collectivityRepository.collectivityExists(collectivityId)) {
             throw new NotFoundException("Collectivité introuvable : id=" + collectivityId);
         }
 
@@ -130,7 +133,7 @@ public class CollectivityService {
     public List<CollectivityTransaction> getTransactions(String collectivityId,
                                                          LocalDate from,
                                                          LocalDate to) {
-        if (!collectivityRepository.collectivityExists(Integer.parseInt(collectivityId))) {
+        if (!collectivityRepository.collectivityExists(collectivityId)) {
             throw new NotFoundException("Collectivité introuvable : id=" + collectivityId);
         }
         if (from == null || to == null) {
@@ -140,5 +143,35 @@ public class CollectivityService {
             throw new BadRequestException("La date 'from' ne peut pas être après la date 'to'.");
         }
         return transactionRepository.findByCollectivityIdAndPeriod(collectivityId, from, to);
+    }
+
+    public Collectivity getById(String id) {
+        if (!collectivityRepository.collectivityExists(id)) {
+            throw new NotFoundException("Collectivité introuvable : id=" + id);
+        }
+
+        return collectivityRepository.findById(id);
+    }
+
+    public List<FinancialAccount> getFinancialAccounts(String id, LocalDate at) {
+
+        if (!collectivityRepository.collectivityExists(id)) {
+            throw new NotFoundException("Collectivité introuvable : id=" + id);
+        }
+
+        // 🔹 récupérer tous les comptes
+        List<FinancialAccount> accounts =
+                financialAccountRepository.findByCollectivityId(id);
+
+        // 🔥 calcul du solde à une date donnée
+        for (FinancialAccount account : accounts) {
+
+            Double balance = transactionRepository
+                    .sumAmountByAccountUntilDate(account.getId(), at);
+
+            account.setAmount(balance != null ? balance : 0);
+        }
+
+        return accounts;
     }
 }

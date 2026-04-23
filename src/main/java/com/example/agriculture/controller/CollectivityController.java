@@ -38,7 +38,7 @@ public class CollectivityController {
         }
     }
 
-    @PatchMapping("/{id}/identity")
+    @PatchMapping("/{id}/informations")
     public ResponseEntity<?> assignIdentity(
             @PathVariable int id,
             @RequestBody AssignCollectivityIdentity payload) {
@@ -85,6 +85,27 @@ public class CollectivityController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         } catch (NotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/{id}/financialAccounts")
+    public ResponseEntity<?> getFinancialAccounts(
+            @PathVariable String id,
+            @RequestParam @DateTimeFormat( iso = DateTimeFormat.ISO.DATE) LocalDate at
+    ) {
+        try {
+            return ResponseEntity.status(HttpStatus.OK).body(collectivityService.getFinancialAccounts(id, at));
+        } catch (Exception e) {
+            throw new RuntimeException("Not implemented yet");
+        }
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getCollectivityById(@PathVariable String id) {
+        try {
+            return ResponseEntity.status(HttpStatus.OK).body(collectivityService.getById(id));
+        }catch (Exception e){
+            throw new RuntimeException("Not implemented yet");
         }
     }
 }

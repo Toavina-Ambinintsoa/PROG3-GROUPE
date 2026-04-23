@@ -92,4 +92,32 @@ public class TransactionRepository {
         }
         return txList;
     }
+
+    public Double sumAmountByAccountUntilDate(String accountId, LocalDate at) {
+
+        String sql = """
+            SELECT SUM(amount) as total
+            FROM collectivity_transaction
+            WHERE account_credited_id = ?
+              AND creation_date <= ?
+            """;
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, accountId);
+            stmt.setDate(2, Date.valueOf(at));
+
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                return rs.getDouble("total");
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+
+        return 0.0;
+    }
 }

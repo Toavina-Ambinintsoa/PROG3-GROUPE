@@ -109,11 +109,11 @@ public class CollectivityRepository {
         }
     }
 
-    public boolean collectivityExists(int collectivityId) {
+    public boolean collectivityExists(String collectivityId) {
         String sql = "SELECT COUNT(id) FROM collectivity WHERE id = ?";
         try (Connection conn = dataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setInt(1, collectivityId);
+            stmt.setString(1, collectivityId);
             ResultSet rs = stmt.executeQuery();
             return rs.next() && rs.getInt(1) > 0;
         } catch (SQLException e) {
@@ -145,11 +145,11 @@ public class CollectivityRepository {
         }
     }
 
-    public boolean hasName(int collectivityId) {
+    public boolean hasName(String collectivityId) {
         String sql = "SELECT name FROM collectivity WHERE id = ?";
         try (Connection conn = dataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setInt(1, collectivityId);
+            stmt.setString(1, collectivityId);
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
                 String name = rs.getString("name");
@@ -161,11 +161,11 @@ public class CollectivityRepository {
         }
     }
 
-    public boolean hasNumber(int collectivityId) {
+    public boolean hasNumber(String collectivityId) {
         String sql = "SELECT number FROM collectivity WHERE id = ?";
         try (Connection conn = dataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setInt(1, collectivityId);
+            stmt.setString(1, collectivityId);
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
                 return rs.getObject("number") != null;
@@ -176,7 +176,7 @@ public class CollectivityRepository {
         }
     }
 
-    public Collectivity assignIdentity(int collectivityId, String name, Integer number) {
+    public Collectivity assignIdentity(String collectivityId, String name, Integer number) {
         StringBuilder sql = new StringBuilder("UPDATE collectivity SET ");
         List<Object> params = new ArrayList<>();
 
@@ -205,7 +205,7 @@ public class CollectivityRepository {
         return findById(collectivityId);
     }
 
-    public Collectivity findById(int collectivityId) {
+    public Collectivity findById(String collectivityId) {
         String sql = """
                 SELECT c.id, c.location, c.name, c.number, c.specialty, c.created_at,
                        p.id  AS p_id,  p.first_name AS p_fn,  p.last_name AS p_ln,  p.occupation AS p_occ,
@@ -222,7 +222,7 @@ public class CollectivityRepository {
                 """;
         try (Connection conn = dataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setInt(1, collectivityId);
+            stmt.setString(1, collectivityId);
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
                 return mapRow(rs);
