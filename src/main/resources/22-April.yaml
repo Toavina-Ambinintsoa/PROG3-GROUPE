@@ -66,12 +66,16 @@ paths:
         400:
           description: |
             Bad request in the following cases :
+            - Neither name nor number is provided in the request body.
+        404:
+          description: Collectivity not found.
+        409:
+          description: |
+            Conflict in the following cases :
             - The name is already assigned to this collectivity and cannot be changed.
             - The number is already assigned to this collectivity and cannot be changed.
             - The provided name is already used by another collectivity.
             - The provided number is already used by another collectivity.
-        404:
-          description: Collectivity not found.
 
   '/members':
     post:
@@ -120,6 +124,9 @@ components:
       properties:
         location:
           type: string
+        specialty:
+          type: string
+          description: Agricultural specialty of the collectivity.
         members:
           type: array
           items:
@@ -164,6 +171,13 @@ components:
           description: Unique number of the collectivity, assigned by the federation.
         location:
           type: string
+        specialty:
+          type: string
+          description: Agricultural specialty of the collectivity.
+        createdAt:
+          type: string
+          format: date
+          description: Creation date of the collectivity.
         structure:
           $ref: '#/components/schemas/CollectivityStructure'
         members:
@@ -181,8 +195,20 @@ components:
           type: string
         referees:
           type: array
+          description: List of confirmed member IDs sponsoring the candidate (minimum 2).
           items:
             $ref: '#/components/schemas/MemberIdentifier'
+        refereeRelationships:
+          type: object
+          description: |
+            Nature of the relationship between the candidate and each referee.
+            Key = referee member ID, Value = relationship type (e.g. "family", "friend", "colleague").
+            Required by B-2.
+          additionalProperties:
+            type: string
+          example:
+            "12": "family"
+            "34": "colleague"
         registrationFeePaid:
           type: boolean
         membershipDuesPaid:

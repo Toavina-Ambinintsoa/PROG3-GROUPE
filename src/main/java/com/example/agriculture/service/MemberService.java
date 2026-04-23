@@ -85,7 +85,7 @@ public class MemberService {
 
             if (!memberRepository.isSeniorMember(refereeId)) {
                 throw new BadRequestException(
-                        "Le parrain id=" + refereeId + " n'est pas un membre confirmé (SENIOR)."
+                        "Le parrain id=" + refereeId + " n'est pas un membre confirmé (SENIOR) avec plus de 90 jours d'ancienneté."
                 );
             }
 
@@ -104,8 +104,6 @@ public class MemberService {
             );
         }
     }
-
-    /// TODO: implementing
 
     public @Nullable Object createMemberPayment(String id, CreateMemberPayment payment) {
         throw new RuntimeException("Not implemented yet");

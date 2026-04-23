@@ -108,7 +108,12 @@ public class MemberRepository {
     }
 
     public boolean isSeniorMember(int memberId) {
-        String sql = "SELECT COUNT(id) FROM member WHERE id = ? AND occupation = 'SENIOR'";
+        String sql = """
+                SELECT COUNT(id) FROM member
+                WHERE id = ?
+                  AND occupation = 'SENIOR'
+                  AND adhesion_date <= CURRENT_DATE - INTERVAL '90 days'
+                """;
         try (Connection conn = dataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, memberId);
