@@ -5,6 +5,7 @@ import org.agri.federation_agricole.dto.CollectivityInformationDTO;
 import org.agri.federation_agricole.dto.CollectivityLocalStatisticsDTO;
 import org.agri.federation_agricole.dto.CollectivityOverallStatisticsDTO;
 import org.agri.federation_agricole.entity.Enum.Gender;
+import org.agri.federation_agricole.entity.Enum.Occupation;
 import org.agri.federation_agricole.entity.Member;
 import org.springframework.stereotype.Repository;
 
@@ -97,6 +98,7 @@ public class StatisticsRepository {
                 member.setProfession(memberRs.getString("profession"));
                 member.setPhone(memberRs.getString("phone"));
                 member.setEmail(memberRs.getString("email"));
+                member.setOccupation(Occupation.valueOf(memberRs.getString("occupation")));
                 member.setRegistrationDate(memberRs.getDate("registration_date").toLocalDate());
 
                 // Earned amount

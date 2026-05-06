@@ -452,7 +452,7 @@ public class ActivityRepository {
         StringBuilder placeholders = new StringBuilder();
         for (int i = 0; i < occupations.length; i++) {
             if (i > 0) placeholders.append(",");
-            placeholders.append("?");
+            placeholders.append("?::occupation_type");
         }
 
         String membersQuery = """
