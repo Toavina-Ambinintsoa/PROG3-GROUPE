@@ -9,14 +9,13 @@ import java.sql.SQLException;
 
 @Configuration
 public class DataSource {
-    private final String jdbcURl = System.getenv("JDBC_URl"); //
-    private final String user = System.getenv("USER");
-    private final String password = System.getenv("PASSWORD");
+    private final String jdbcURl = "jdbc:postgresql://localhost:5432/agri_db";
+    private final String user = "postgres";
+    private final String password = "toavina";
 
-    @Bean
     public Connection getConnection() {
         try {
-            return DriverManager.getConnection("jdbc:postgresql://localhost:5432/mini_dish_db", "postgres", "postgres");
+            return DriverManager.getConnection(jdbcURl, user, password);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }

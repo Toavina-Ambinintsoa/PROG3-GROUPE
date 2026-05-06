@@ -6,13 +6,10 @@ import lombok.NoArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 @Component
-public class CollectivityStructure {
-    private Member president;
-    private Member vicePresident;
-    private Member treasurer;
-    private Member secretary;
-
+public class AssignCollectivityIdentity {
+    private String name;
+    private Integer number;
 }
