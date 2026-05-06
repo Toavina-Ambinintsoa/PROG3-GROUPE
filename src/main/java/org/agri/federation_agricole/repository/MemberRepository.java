@@ -40,19 +40,19 @@ public class MemberRepository {
             stmt.setString(7, member.getProfession());
             stmt.setString(8, member.getPhone());
             stmt.setString(9, member.getEmail());
-            ResultSet resultSet= stmt.executeQuery();
+            ResultSet resultSet = stmt.executeQuery();
             if (resultSet.next()) {
                 id = resultSet.getString("id");
-               m.setId(resultSet.getString("id"));
-               m.setFirstName(resultSet.getString("first_name"));
-               m.setLastName(resultSet.getString("last_name"));
-               m.setBirthDate(resultSet.getDate("birth_date").toLocalDate());
-               m.setGender(Gender.valueOf(resultSet.getString("gender")));
-               m.setAddress(resultSet.getString("address"));
-               m.setEmail(resultSet.getString("email"));
-               m.setPhone(resultSet.getString("phone"));
-               m.setProfession(resultSet.getString("profession"));
-               m.setRegistrationDate(resultSet.getDate("registration_date").toLocalDate());
+                m.setId(resultSet.getString("id"));
+                m.setFirstName(resultSet.getString("first_name"));
+                m.setLastName(resultSet.getString("last_name"));
+                m.setBirthDate(resultSet.getDate("birth_date").toLocalDate());
+                m.setGender(Gender.valueOf(resultSet.getString("gender")));
+                m.setAddress(resultSet.getString("address"));
+                m.setEmail(resultSet.getString("email"));
+                m.setPhone(resultSet.getString("phone"));
+                m.setProfession(resultSet.getString("profession"));
+                m.setRegistrationDate(resultSet.getDate("registration_date").toLocalDate());
             }
             PreparedStatement stmt2 = conn.prepareStatement(attachQuery);
             stmt2.setString(1, member.getCollectivityId());
@@ -62,9 +62,65 @@ public class MemberRepository {
             if (resultSet1.next()) {
                 m.setOccupation(Occupation.valueOf(resultSet1.getString("occupation")));
             }
+
+            // Attacher les referees
+            if (member.getRefereesId() != null && !member.getRefereesId().isEmpty()) {
+                attachReferees(conn, id, member.getRefereesId());
+            }
+
             conn.commit();
+            // Charger les referees du membre sauvegardé
+            m.setReferees(getRefereesByMemberId(id));
             return m;
-        }catch (Exception e){
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+    }
+
+    private void attachReferees(Connection conn, String memberId, List<String> refereeIds) throws SQLException {
+        String sql = """
+                insert into member_referee (member_refereed_id, member_referee_id)
+                values (?, ?)
+                on conflict do nothing
+                """;
+        PreparedStatement ps = conn.prepareStatement(sql);
+        for (String refereeId : refereeIds) {
+            ps.setString(1, memberId);
+            ps.setString(2, refereeId);
+            ps.addBatch();
+        }
+        ps.executeBatch();
+    }
+
+    public List<Member> getRefereesByMemberId(String memberId) {
+        String query = """
+                SELECT m.id, m.last_name, m.first_name, m.birth_date, m.gender,
+                     m.address, m.profession, m.phone, m.email, m.registration_date
+                FROM members m
+                JOIN member_referee mr ON mr.member_referee_id = m.id
+                WHERE mr.member_refereed_id = ?
+                """;
+        List<Member> referees = new ArrayList<>();
+        try (Connection conn = dataSource.getConnection()) {
+            PreparedStatement ps = conn.prepareStatement(query);
+            ps.setString(1, memberId);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                Member ref = new Member();
+                ref.setId(rs.getString("id"));
+                ref.setFirstName(rs.getString("first_name"));
+                ref.setLastName(rs.getString("last_name"));
+                ref.setBirthDate(rs.getDate("birth_date").toLocalDate());
+                ref.setGender(Gender.valueOf(rs.getString("gender")));
+                ref.setAddress(rs.getString("address"));
+                ref.setProfession(rs.getString("profession"));
+                ref.setPhone(rs.getString("phone"));
+                ref.setEmail(rs.getString("email"));
+                ref.setRegistrationDate(rs.getDate("registration_date").toLocalDate());
+                referees.add(ref);
+            }
+            return referees;
+        } catch (SQLException e) {
             throw new RuntimeException(e.getMessage());
         }
     }
@@ -100,6 +156,7 @@ public class MemberRepository {
                 member.setPhone(rs.getString("phone"));
                 member.setEmail(rs.getString("email"));
                 member.setRegistrationDate(rs.getDate("registration_date").toLocalDate());
+                member.setReferees(getRefereesByMemberId(id));
             }
             return member;
         }catch(SQLException e){
@@ -132,6 +189,7 @@ public class MemberRepository {
                 m.setEmail(resultSet.getString("email"));
                 m.setBirthDate(resultSet.getDate("birth_date").toLocalDate());
                 m.setRegistrationDate(resultSet.getDate("registration_date").toLocalDate());
+                m.setReferees(getRefereesByMemberId(m.getId()));
                 collectivityMembers.add(m);
             }
             return collectivityMembers;
@@ -143,7 +201,8 @@ public class MemberRepository {
     public Structure getStructureByCollectivityId(String Id){
         String query = """
                 SELECT m.id, m.last_name, m.first_name, m.birth_date, m.gender,
-                    m.address, m.profession, m.phone, m.email, m.registration_date
+                    m.address, m.profession, m.phone, m.email, m.registration_date,
+                    cm.occupation
                 FROM members m
                 JOIN collectivity_members cm ON cm.member_id = m.id
                 WHERE cm.collectivity_id = ?
@@ -156,62 +215,24 @@ public class MemberRepository {
             ResultSet resultSet = preparedStatement.executeQuery();
             while(resultSet.next()){
                 Member m = new Member();
-                if (Occupation.valueOf(resultSet.getString("occupation"))== Occupation.PRESIDENT){
-                    m.setId(resultSet.getString("id"));
-                    m.setLastName(resultSet.getString("last_name"));
-                    m.setFirstName(resultSet.getString("first_name"));
-                    m.setGender(Gender.valueOf(resultSet.getString("gender")));
-                    m.setAddress(resultSet.getString("address"));
-                    m.setProfession(resultSet.getString("profession"));
-                    m.setPhone(resultSet.getString("phone"));
-                    m.setEmail(resultSet.getString("email"));
-                    m.setBirthDate(resultSet.getDate("birth_date").toLocalDate());
-                    m.setRegistrationDate(resultSet.getDate("registration_date").toLocalDate());
-                    m.setOccupation(Occupation.valueOf(resultSet.getString("occupation")));
-                    structure.setPRESIDENT(m);
-                }
-                if (Occupation.valueOf(resultSet.getString("occupation"))== Occupation.VICE_PRESIDENT){
-                    m.setId(resultSet.getString("id"));
-                    m.setLastName(resultSet.getString("last_name"));
-                    m.setFirstName(resultSet.getString("first_name"));
-                    m.setGender(Gender.valueOf(resultSet.getString("gender")));
-                    m.setAddress(resultSet.getString("address"));
-                    m.setProfession(resultSet.getString("profession"));
-                    m.setPhone(resultSet.getString("phone"));
-                    m.setEmail(resultSet.getString("email"));
-                    m.setBirthDate(resultSet.getDate("birth_date").toLocalDate());
-                    m.setRegistrationDate(resultSet.getDate("registration_date").toLocalDate());
-                    m.setOccupation(Occupation.valueOf(resultSet.getString("occupation")));
-                    structure.setVICE_PRESIDENT(m);
-                }
-                if (Occupation.valueOf(resultSet.getString("occupation"))== Occupation.TREASURER){
-                    m.setId(resultSet.getString("id"));
-                    m.setLastName(resultSet.getString("last_name"));
-                    m.setFirstName(resultSet.getString("first_name"));
-                    m.setGender(Gender.valueOf(resultSet.getString("gender")));
-                    m.setAddress(resultSet.getString("address"));
-                    m.setProfession(resultSet.getString("profession"));
-                    m.setPhone(resultSet.getString("phone"));
-                    m.setEmail(resultSet.getString("email"));
-                    m.setBirthDate(resultSet.getDate("birth_date").toLocalDate());
-                    m.setRegistrationDate(resultSet.getDate("registration_date").toLocalDate());
-                    m.setOccupation(Occupation.valueOf(resultSet.getString("occupation")));
-                    structure.setTREASURER(m);
-                }
-                if (Occupation.valueOf(resultSet.getString("occupation"))== Occupation.SECRETARY){
-                    m.setId(resultSet.getString("id"));
-                    m.setLastName(resultSet.getString("last_name"));
-                    m.setFirstName(resultSet.getString("first_name"));
-                    m.setGender(Gender.valueOf(resultSet.getString("gender")));
-                    m.setAddress(resultSet.getString("address"));
-                    m.setProfession(resultSet.getString("profession"));
-                    m.setPhone(resultSet.getString("phone"));
-                    m.setEmail(resultSet.getString("email"));
-                    m.setBirthDate(resultSet.getDate("birth_date").toLocalDate());
-                    m.setRegistrationDate(resultSet.getDate("registration_date").toLocalDate());
-                    m.setOccupation(Occupation.valueOf(resultSet.getString("occupation")));
-                    structure.setSECRETARY(m);
-                }
+                String occupationStr = resultSet.getString("occupation");
+                if (occupationStr == null) continue;
+                Occupation occ = Occupation.valueOf(occupationStr);
+                m.setId(resultSet.getString("id"));
+                m.setLastName(resultSet.getString("last_name"));
+                m.setFirstName(resultSet.getString("first_name"));
+                m.setGender(Gender.valueOf(resultSet.getString("gender")));
+                m.setAddress(resultSet.getString("address"));
+                m.setProfession(resultSet.getString("profession"));
+                m.setPhone(resultSet.getString("phone"));
+                m.setEmail(resultSet.getString("email"));
+                m.setBirthDate(resultSet.getDate("birth_date").toLocalDate());
+                m.setRegistrationDate(resultSet.getDate("registration_date").toLocalDate());
+                m.setOccupation(occ);
+                if (occ == Occupation.PRESIDENT) structure.setPRESIDENT(m);
+                else if (occ == Occupation.VICE_PRESIDENT) structure.setVICE_PRESIDENT(m);
+                else if (occ == Occupation.TREASURER) structure.setTREASURER(m);
+                else if (occ == Occupation.SECRETARY) structure.setSECRETARY(m);
             }
             return structure;
         }catch(Exception e){
