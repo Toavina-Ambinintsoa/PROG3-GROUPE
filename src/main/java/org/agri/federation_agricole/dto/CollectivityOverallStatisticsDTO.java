@@ -12,4 +12,5 @@ public class CollectivityOverallStatisticsDTO {
     private CollectivityInformationDTO collectivityInformation;
     private int newMembersNumber;
     private double overallMemberCurrentDuePercentage;
+    private double overallMemberAssiduityPercentage;
 }

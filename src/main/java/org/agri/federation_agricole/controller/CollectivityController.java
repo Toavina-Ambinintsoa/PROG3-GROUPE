@@ -3,7 +3,11 @@ package org.agri.federation_agricole.controller;
 import org.agri.federation_agricole.entity.Collectivityinformation;
 import org.agri.federation_agricole.entity.CreateCollectivity;
 import org.agri.federation_agricole.entity.CreateContribution;
+import org.agri.federation_agricole.entity.CreateCollectivityActivity;
+import org.agri.federation_agricole.entity.CreateActivityMemberAttendance;
+import org.agri.federation_agricole.service.ActivityService;
 import org.agri.federation_agricole.service.CollectivityService;
+import org.agri.federation_agricole.service.StatisticsService;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,9 +20,15 @@ import java.util.List;
 @RequestMapping("/collectivities")
 public class CollectivityController {
     private final CollectivityService collectivityService;
+    private final StatisticsService statisticsService;
+    private final ActivityService activityService;
 
-    public CollectivityController(CollectivityService collectivityService) {
+    public CollectivityController(CollectivityService collectivityService,
+                                  StatisticsService statisticsService,
+                                  ActivityService activityService) {
         this.collectivityService = collectivityService;
+        this.statisticsService = statisticsService;
+        this.activityService = activityService;
     }
 
     @GetMapping
@@ -111,6 +121,61 @@ public class CollectivityController {
             return ResponseEntity
                     .status(HttpStatus.OK)
                     .body(collectivityService.getCollectivityFinancialAccounts(id, at));
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // Bonus 1 — Activities (E) and Attendance (F)
+    // -------------------------------------------------------------------------
+
+    @GetMapping("/{id}/activities")
+    public ResponseEntity<?> getActivities(@PathVariable String id) {
+        try {
+            return ResponseEntity
+                    .status(HttpStatus.OK)
+                    .body(activityService.getActivities(id));
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+    }
+
+    @PostMapping("/{id}/activities")
+    public ResponseEntity<?> createActivities(
+            @PathVariable String id,
+            @RequestBody List<CreateCollectivityActivity> activities) {
+        try {
+            return ResponseEntity
+                    .status(HttpStatus.OK)
+                    .body(activityService.saveActivities(id, activities));
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+    }
+
+    @PostMapping("/{id}/activities/{activityId}/attendance")
+    public ResponseEntity<?> createAttendance(
+            @PathVariable String id,
+            @PathVariable String activityId,
+            @RequestBody List<CreateActivityMemberAttendance> attendances) {
+        try {
+            return ResponseEntity
+                    .status(HttpStatus.CREATED)
+                    .body(activityService.saveAttendance(id, activityId, attendances));
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+    }
+
+    @GetMapping("/{id}/activities/{activityId}/attendance")
+    public ResponseEntity<?> getAttendance(
+            @PathVariable String id,
+            @PathVariable String activityId) {
+        try {
+            return ResponseEntity
+                    .status(HttpStatus.OK)
+                    .body(activityService.getAttendance(id, activityId));
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
         }

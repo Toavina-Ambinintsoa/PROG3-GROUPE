@@ -12,4 +12,5 @@ public class CollectivityLocalStatisticsDTO {
     private Member memberDescription;
     private long earnedAmount;
     private long unpaidAmount;
+    private double assiduityPercentage;
 }

@@ -17,9 +17,11 @@ import java.util.List;
 public class StatisticsRepository {
 
     private final DataSource dataSource;
+    private final ActivityRepository activityRepository;
 
-    public StatisticsRepository(DataSource dataSource) {
+    public StatisticsRepository(DataSource dataSource, ActivityRepository activityRepository) {
         this.dataSource = dataSource;
+        this.activityRepository = activityRepository;
     }
 
     /**
@@ -34,7 +36,8 @@ public class StatisticsRepository {
         // 1. Get all active members of the collectivity
         String memberQuery = """
                 SELECT m.id, m.first_name, m.last_name, m.birth_date, m.gender,
-                       m.address, m.profession, m.phone, m.email, m.registration_date
+                       m.address, m.profession, m.phone, m.email, m.registration_date,
+                       cm.occupation
                 FROM members m
                 JOIN collectivity_members cm ON cm.member_id = m.id
                 WHERE cm.collectivity_id = ?
@@ -132,7 +135,13 @@ public class StatisticsRepository {
 
                 long unpaid = Math.max(0, totalExpected - totalPaidForContributions);
 
-                result.add(new CollectivityLocalStatisticsDTO(member, earned, unpaid));
+                // Bonus 2: assiduity percentage for this member
+                String occupation = memberRs.getString("occupation");
+                if (occupation == null) occupation = "JUNIOR";
+                double assiduity = activityRepository.getMemberAssiduityPercentage(
+                        collectivityId, member.getId(), occupation, from, to);
+
+                result.add(new CollectivityLocalStatisticsDTO(member, earned, unpaid, assiduity));
             }
 
         } catch (SQLException e) {
@@ -278,7 +287,11 @@ public class StatisticsRepository {
                 double percentage = totalMembers == 0 ? 0.0
                         : Math.round((currentMembers * 100.0 / totalMembers) * 100.0) / 100.0;
 
-                result.add(new CollectivityOverallStatisticsDTO(info, newMembersCount, percentage));
+                // Bonus 2: overall assiduity for this collectivity
+                double assiduity = activityRepository.getCollectivityAssiduityPercentage(
+                        collectivityId, from, to);
+
+                result.add(new CollectivityOverallStatisticsDTO(info, newMembersCount, percentage, assiduity));
             }
 
         } catch (SQLException e) {
