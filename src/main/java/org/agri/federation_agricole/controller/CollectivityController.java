@@ -1,14 +1,15 @@
 package org.agri.federation_agricole.controller;
 
-import org.agri.federation_agricole.entity.Collectivity;
 import org.agri.federation_agricole.entity.Collectivityinformation;
 import org.agri.federation_agricole.entity.CreateCollectivity;
+import org.agri.federation_agricole.entity.CreateContribution;
 import org.agri.federation_agricole.service.CollectivityService;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -37,7 +38,7 @@ public class CollectivityController {
             return ResponseEntity
                     .status(HttpStatus.OK)
                     .body(collectivityService.getCollectityById(id));
-        }catch (Exception e){
+        } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
         }
     }
@@ -48,7 +49,7 @@ public class CollectivityController {
             return ResponseEntity
                     .status(HttpStatus.CREATED)
                     .body(collectivityService.saveCollectivities(collectivities));
-        }catch (Exception e){
+        } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
         }
     }
@@ -60,34 +61,58 @@ public class CollectivityController {
                     .status(HttpStatus.OK)
                     .body(collectivityService.setInformations(id, collectivityinformation));
         } catch (Exception e) {
-            throw new RuntimeException("Not implemented yet");
+            throw new RuntimeException(e.getMessage());
         }
     }
 
     @GetMapping("/{id}/membershipFees")
-    public  ResponseEntity<?> getMembershipFees(@PathVariable String id) {
+    public ResponseEntity<?> getMembershipFees(@PathVariable String id) {
         try {
             return ResponseEntity
                     .status(HttpStatus.OK)
                     .body(collectivityService.getCollectivityContribution(id));
-        }catch (Exception e){
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+    }
+
+    @PostMapping("/{id}/membershipFees")
+    public ResponseEntity<?> createMembershipFees(
+            @PathVariable String id,
+            @RequestBody List<CreateContribution> contributions) {
+        try {
+            return ResponseEntity
+                    .status(HttpStatus.OK)
+                    .body(collectivityService.saveCollectivityContributions(id, contributions));
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+    }
+
+    @GetMapping("/{id}/transactions")
+    public ResponseEntity<?> getTransactions(
+            @PathVariable String id,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+        try {
+            return ResponseEntity
+                    .status(HttpStatus.OK)
+                    .body(collectivityService.getCollectivityTransactions(id, from, to));
+        } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
         }
     }
 
     @GetMapping("/{id}/financialAccounts")
-    public  ResponseEntity<?> getFinancialAccounts(
+    public ResponseEntity<?> getFinancialAccounts(
             @PathVariable String id,
-            @RequestParam DateTimeFormat.ISO at
-            ) {
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate at) {
         try {
             return ResponseEntity
                     .status(HttpStatus.OK)
                     .body(collectivityService.getCollectivityFinancialAccounts(id, at));
-        }catch (Exception e){
+        } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
         }
-
     }
-
 }
