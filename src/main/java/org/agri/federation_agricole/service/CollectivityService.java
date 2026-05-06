@@ -56,11 +56,14 @@ public class CollectivityService {
 
     public @Nullable List<Collectivity> saveCollectivities(List<CreateCollectivity> collectivities) {
         for (CreateCollectivity c : collectivities) {
-            if (c.getMembers().size() < 2) {
-                throw new RuntimeException("Not enough members");
+            if (c.getMembers() == null || c.getMembers().size() < 10) {
+                throw new BadRequestException(
+                        "Collectivity must have at least 10 members, otherwise actual is "
+                                + (c.getMembers() == null ? 0 : c.getMembers().size())
+                );
             }
             if (!c.isFederationApproval()) {
-                throw new UnAuthorizeException("Creation not approved");
+                throw new UnAuthorizeException("Creation not approved by federation");
             }
         }
         List<Collectivity> cols = collectivityRepository.saveCollectivities(collectivities);
