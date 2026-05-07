@@ -78,7 +78,10 @@ public class CollectivityService {
         if (id == null) {
             throw new BadRequestException("id is null");
         }
-        return collectivityRepository.getCollectivityById(id);
+        Collectivity c = collectivityRepository.getCollectivityById(id);
+        assert c != null;
+        c.setStructure(memberRepository.getStructureByCollectivityId(id));
+        return c;
     }
 
     public @Nullable Object setInformations(String id, Collectivityinformation collectivityinformation) {
