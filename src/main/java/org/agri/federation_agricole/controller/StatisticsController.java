@@ -14,7 +14,7 @@ import java.time.LocalDate;
  * for these two routes — kept as-is to match the specification exactly.
  */
 @RestController
-@RequestMapping("/collectivites")
+@RequestMapping("/collectivities")
 public class StatisticsController {
 
     private final StatisticsService statisticsService;
@@ -38,7 +38,7 @@ public class StatisticsController {
                     .status(HttpStatus.OK)
                     .body(statisticsService.getLocalStatistics(id, from, to));
         } catch (Exception e) {
-            throw new RuntimeException(e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
     }
 

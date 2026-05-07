@@ -137,7 +137,7 @@ public class CollectivityController {
                     .status(HttpStatus.OK)
                     .body(activityService.getActivities(id));
         } catch (Exception e) {
-            throw new RuntimeException(e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
     }
 
@@ -150,7 +150,7 @@ public class CollectivityController {
                     .status(HttpStatus.OK)
                     .body(activityService.saveActivities(id, activities));
         } catch (Exception e) {
-            throw new RuntimeException(e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
     }
 

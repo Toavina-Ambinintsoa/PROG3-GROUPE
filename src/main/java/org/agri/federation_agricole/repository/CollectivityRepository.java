@@ -55,12 +55,13 @@ public class CollectivityRepository {
                 from collectivities c
                 where c.id = ?;
         """;
-        Collectivity c = new Collectivity();
+        Collectivity c = null;
         try (Connection conn = dataSource.getConnection()){
             PreparedStatement preparedStatement = conn.prepareStatement(query);
             preparedStatement.setString(1, id);
             ResultSet resultSet = preparedStatement.executeQuery();
             if(resultSet.next()){
+                c = new Collectivity();
                 c.setId(resultSet.getString("id"));
                 c.setNumber(resultSet.getInt("number"));
                 c.setName(resultSet.getString("name"));
