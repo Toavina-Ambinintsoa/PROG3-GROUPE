@@ -62,65 +62,9 @@ public class MemberRepository {
             if (resultSet1.next()) {
                 m.setOccupation(Occupation.valueOf(resultSet1.getString("occupation")));
             }
-
-            // Attacher les referees
-            if (member.getRefereesId() != null && !member.getRefereesId().isEmpty()) {
-                attachReferees(conn, id, member.getRefereesId());
-            }
-
             conn.commit();
-            // Charger les referees du membre sauvegardé
-            m.setReferees(getRefereesByMemberId(id));
             return m;
         } catch (Exception e) {
-            throw new RuntimeException(e.getMessage());
-        }
-    }
-
-    private void attachReferees(Connection conn, String memberId, List<String> refereeIds) throws SQLException {
-        String sql = """
-                insert into member_referee (member_refereed_id, member_referee_id)
-                values (?, ?)
-                on conflict do nothing
-                """;
-        PreparedStatement ps = conn.prepareStatement(sql);
-        for (String refereeId : refereeIds) {
-            ps.setString(1, memberId);
-            ps.setString(2, refereeId);
-            ps.addBatch();
-        }
-        ps.executeBatch();
-    }
-
-    public List<Member> getRefereesByMemberId(String memberId) {
-        String query = """
-                SELECT m.id, m.last_name, m.first_name, m.birth_date, m.gender,
-                     m.address, m.profession, m.phone, m.email, m.registration_date
-                FROM members m
-                JOIN member_referee mr ON mr.member_referee_id = m.id
-                WHERE mr.member_refereed_id = ?
-                """;
-        List<Member> referees = new ArrayList<>();
-        try (Connection conn = dataSource.getConnection()) {
-            PreparedStatement ps = conn.prepareStatement(query);
-            ps.setString(1, memberId);
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) {
-                Member ref = new Member();
-                ref.setId(rs.getString("id"));
-                ref.setFirstName(rs.getString("first_name"));
-                ref.setLastName(rs.getString("last_name"));
-                ref.setBirthDate(rs.getDate("birth_date").toLocalDate());
-                ref.setGender(Gender.valueOf(rs.getString("gender")));
-                ref.setAddress(rs.getString("address"));
-                ref.setProfession(rs.getString("profession"));
-                ref.setPhone(rs.getString("phone"));
-                ref.setEmail(rs.getString("email"));
-                ref.setRegistrationDate(rs.getDate("registration_date").toLocalDate());
-                referees.add(ref);
-            }
-            return referees;
-        } catch (SQLException e) {
             throw new RuntimeException(e.getMessage());
         }
     }
@@ -138,7 +82,7 @@ public class MemberRepository {
                 select
                  id, last_name, first_name, birth_date, gender, address, profession, phone, email,
                  registration_date
-                from member where id=?
+                from members where id=?
                 """;
         Member member = new Member();
         try(Connection conn = dataSource.getConnection()){
@@ -156,7 +100,6 @@ public class MemberRepository {
                 member.setPhone(rs.getString("phone"));
                 member.setEmail(rs.getString("email"));
                 member.setRegistrationDate(rs.getDate("registration_date").toLocalDate());
-                member.setReferees(getRefereesByMemberId(id));
             }
             return member;
         }catch(SQLException e){
@@ -189,7 +132,6 @@ public class MemberRepository {
                 m.setEmail(resultSet.getString("email"));
                 m.setBirthDate(resultSet.getDate("birth_date").toLocalDate());
                 m.setRegistrationDate(resultSet.getDate("registration_date").toLocalDate());
-                m.setReferees(getRefereesByMemberId(m.getId()));
                 collectivityMembers.add(m);
             }
             return collectivityMembers;
@@ -199,6 +141,7 @@ public class MemberRepository {
     }
 
     public Structure getStructureByCollectivityId(String Id){
+        // BUG CORRIGÉ : cm.occupation ajouté dans le SELECT
         String query = """
                 SELECT m.id, m.last_name, m.first_name, m.birth_date, m.gender,
                     m.address, m.profession, m.phone, m.email, m.registration_date,
@@ -248,13 +191,13 @@ public class MemberRepository {
         String query = "SELECT id FROM members where id ilike ? order by id desc limit 1";
         try (Connection conn = dataSource.getConnection()){
             PreparedStatement statement = conn.prepareStatement(query);
-            statement.setString(1,"'%"+ilikeVar+"%'");
+            statement.setString(1, "%" + ilikeVar + "%");
             ResultSet resultSet = statement.executeQuery();
             if (resultSet.next()){
                 lastId = resultSet.getString("id");
             }
             else {
-                lastId = ilikeVar+"-M0";
+                lastId = ilikeVar + "-M0";
             }
             return lastId;
         }catch (SQLException e){
@@ -270,7 +213,6 @@ public class MemberRepository {
         }
         int id = Integer.parseInt(parts[1].substring(1));
         id += 1;
-        return parts[0]+"-M"+id;
+        return parts[0] + "-M" + id;
     }
-
 }

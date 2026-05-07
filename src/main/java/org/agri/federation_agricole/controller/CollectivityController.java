@@ -20,14 +20,11 @@ import java.util.List;
 @RequestMapping("/collectivities")
 public class CollectivityController {
     private final CollectivityService collectivityService;
-    private final StatisticsService statisticsService;
     private final ActivityService activityService;
 
     public CollectivityController(CollectivityService collectivityService,
-                                  StatisticsService statisticsService,
                                   ActivityService activityService) {
         this.collectivityService = collectivityService;
-        this.statisticsService = statisticsService;
         this.activityService = activityService;
     }
 
