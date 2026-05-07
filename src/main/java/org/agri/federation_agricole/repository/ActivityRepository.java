@@ -163,6 +163,7 @@ public class ActivityRepository {
         try (Connection conn = dataSource.getConnection()) {
             conn.setAutoCommit(false);
 
+            int[] counter = {Integer.parseInt(getLastAttendanceId(activityId).split("-ATT")[1])};
             for (CreateActivityMemberAttendance c : createList) {
                 // Check if already confirmed
                 PreparedStatement checkPs = conn.prepareStatement(checkQuery);
@@ -177,7 +178,9 @@ public class ActivityRepository {
                     }
                 }
 
-                String id = getNextAttendanceId(activityId);
+                counter[0]++;
+                String prefix = activityId.split("-")[0];
+                String id = prefix + "-ATT" + counter[0];
                 PreparedStatement ps = conn.prepareStatement(upsertQuery);
                 ps.setString(1, id);
                 ps.setString(2, activityId);
@@ -452,7 +455,7 @@ public class ActivityRepository {
         StringBuilder placeholders = new StringBuilder();
         for (int i = 0; i < occupations.length; i++) {
             if (i > 0) placeholders.append(",");
-            placeholders.append("?::occupation_type");
+            placeholders.append("?");
         }
 
         String membersQuery = """
@@ -460,7 +463,7 @@ public class ActivityRepository {
                 FROM members m
                 JOIN collectivity_members cm ON cm.member_id = m.id
                 WHERE cm.collectivity_id = ?
-                  AND cm.occupation IN (%s)
+                  AND cm.occupation::text IN (%s)
                   AND (cm.resignation_date IS NULL)
                 """.formatted(placeholders);
 
@@ -573,10 +576,9 @@ public class ActivityRepository {
     }
 
     private String getLastAttendanceId(String activityId) {
-        String query = "SELECT id FROM activity_attendance WHERE activity_id = ? ORDER BY id DESC LIMIT 1";
+        String query = "SELECT id FROM activity_attendance ORDER BY id DESC LIMIT 1";
         try (Connection conn = dataSource.getConnection()) {
             PreparedStatement ps = conn.prepareStatement(query);
-            ps.setString(1, activityId);
             ResultSet rs = ps.executeQuery();
             if (rs.next()) return rs.getString("id");
             String prefix = activityId.split("-")[0];

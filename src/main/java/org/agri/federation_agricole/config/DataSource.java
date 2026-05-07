@@ -12,7 +12,7 @@ public class DataSource {
 
     public Connection getConnection() {
         try {
-            return DriverManager.getConnection("jdbc:postgresql://localhost:5432/agri_test_db_backup", "postgres", "toky");
+            return DriverManager.getConnection("jdbc:postgresql://localhost:5432/agri_db", "postgres", "000000");
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
